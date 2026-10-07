@@ -1,0 +1,370 @@
+/* ================================
+   ORDER SUCCESS
+================================ */
+
+.order-success-page {
+  --s-blue: #2563eb;
+  --s-blue-dark: #1d4ed8;
+  --s-green: #16a34a;
+  --s-ink: #0f172a;
+  --s-muted: #64748b;
+  --s-line: #e5eaf2;
+  --s-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  min-height: calc(100vh - 76px);
+  min-height: calc(100dvh - 76px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 56px 24px;
+
+  background:
+    radial-gradient(circle at 50% 0%, #dcfce7 0%, rgba(220, 252, 231, 0) 50%),
+    radial-gradient(circle at 50% 15%, #f0fdf4 0%, #ffffff 55%);
+}
+
+.order-success-page a:focus-visible {
+  outline: 2px solid var(--s-blue);
+  outline-offset: 3px;
+}
+
+.success-card {
+  width: 100%;
+  max-width: 600px;
+
+  padding: 52px 44px 44px;
+
+  background: #ffffff;
+
+  border: 1px solid var(--s-line);
+  border-radius: 28px;
+
+  text-align: center;
+
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.03),
+    0 32px 64px -28px rgba(15, 23, 42, 0.22);
+}
+
+/* ================================
+   ICON (single entrance moment)
+================================ */
+
+.success-icon {
+  width: 88px;
+  height: 88px;
+
+  display: grid;
+  place-items: center;
+
+  margin: 0 auto 26px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(145deg, #4ade80 0%, #16a34a 100%);
+  color: #ffffff;
+
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 20px 36px -12px rgba(22, 163, 74, 0.55),
+    0 0 0 10px rgba(34, 197, 94, 0.12);
+
+  animation: success-pop 0.6s var(--s-ease) both;
+}
+
+.success-check {
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+
+  animation: success-draw 0.5s ease-out 0.35s forwards;
+}
+
+@keyframes success-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes success-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ================================
+   TEXT
+================================ */
+
+.success-card h1 {
+  margin: 0 0 12px;
+
+  color: var(--s-ink);
+
+  font-size: clamp(27px, 4vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+.success-card > p {
+  max-width: 420px;
+
+  margin: 0 auto 30px;
+
+  color: var(--s-muted);
+
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ================================
+   ORDER DETAILS (only when Checkout sends them)
+================================ */
+
+.success-order {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+
+  margin-bottom: 14px;
+
+  overflow: hidden;
+
+  border: 1px solid #bbf7d0;
+  border-radius: 18px;
+
+  background: #bbf7d0;
+}
+
+.success-order > div {
+  padding: 16px 12px;
+
+  background: #f0fdf4;
+}
+
+.success-order span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #4b7a5c;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.success-order strong {
+  color: #14532d;
+
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+
+  overflow-wrap: anywhere;
+}
+
+/* ================================
+   STATUS
+================================ */
+
+.success-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+
+  margin-bottom: 32px;
+
+  overflow: hidden;
+
+  border: 1px solid var(--s-line);
+  border-radius: 18px;
+
+  background: var(--s-line);
+}
+
+.success-info > div {
+  padding: 18px 12px;
+
+  background: #f8fafc;
+}
+
+.success-info span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--s-muted);
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.success-info strong {
+  color: var(--s-ink);
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ================================
+   ACTIONS
+================================ */
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.success-primary-btn,
+.success-secondary-btn {
+  min-height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 24px;
+
+  border-radius: 14px;
+
+  text-decoration: none;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  transition:
+    transform 0.3s var(--s-ease),
+    box-shadow 0.3s ease,
+    filter 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.success-primary-btn {
+  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
+  color: #ffffff;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 12px 24px -10px rgba(37, 99, 235, 0.65);
+}
+
+.success-primary-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.success-primary-btn:active,
+.success-secondary-btn:active {
+  transform: scale(0.99);
+}
+
+.success-secondary-btn {
+  border: 1px solid #d8e0ec;
+
+  background: #ffffff;
+  color: #334155;
+}
+
+.success-secondary-btn:hover {
+  border-color: var(--s-blue);
+  color: var(--s-blue);
+  background: #eff6ff;
+}
+
+/* ================================
+   TABLET / MOBILE
+================================ */
+
+@media (min-width: 521px) {
+  .success-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .success-primary-btn,
+  .success-secondary-btn {
+    flex: 1;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .order-success-page {
+    min-height: calc(100dvh - 68px);
+  }
+}
+
+@media (max-width: 520px) {
+  .order-success-page {
+    min-height: calc(100dvh - 64px);
+
+    align-items: flex-start;
+    padding: 28px 16px 48px;
+  }
+
+  .success-card {
+    padding: 38px 22px 28px;
+    border-radius: 22px;
+  }
+
+  .success-icon {
+    width: 76px;
+    height: 76px;
+
+    margin-bottom: 22px;
+  }
+
+  /* status becomes a clean list on phones */
+  .success-info,
+  .success-order {
+    grid-template-columns: 1fr;
+  }
+
+  .success-info > div,
+  .success-order > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 14px 16px;
+  }
+
+  .success-info span,
+  .success-order span {
+    margin: 0;
+  }
+}
+
+/* ================================
+   REDUCED MOTION
+================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .success-icon {
+    animation: none;
+  }
+
+  .success-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .order-success-page *,
+  .order-success-page *::before {
+    transition: none !important;
+  }
+
+  .success-primary-btn:hover {
+    transform: none;
+  }
+}
