@@ -1,21 +1,41 @@
-/* ================================
-   TOKENS
-================================ */
+/* =========================================================
+   SHOPSPHERE NAVBAR
+   Fully Responsive
+   Desktop • Laptop • Tablet • Mobile • Small Mobile
+   ========================================================= */
+
+
+/* =========================================================
+   1. DESIGN TOKENS
+   ========================================================= */
 
 .navbar {
   --nav-blue: #2563eb;
   --nav-blue-dark: #1d4ed8;
   --nav-blue-soft: #eff6ff;
+
   --nav-ink: #0f172a;
   --nav-text: #475569;
   --nav-muted: #64748b;
+
   --nav-line: #e5eaf2;
+
+  --nav-radius: 999px;
+
   --nav-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ================================
-   NAVBAR
-================================ */
+
+/* =========================================================
+   2. GLOBAL NAVBAR SAFETY
+   ========================================================= */
+
+.navbar,
+.navbar *,
+.navbar *::before,
+.navbar *::after {
+  box-sizing: border-box;
+}
 
 .navbar {
   position: sticky;
@@ -23,18 +43,31 @@
   z-index: 1000;
 
   width: 100%;
+  max-width: 100%;
 
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.94);
+
   border-bottom: 1px solid var(--nav-line);
-  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02), 0 8px 24px -16px rgba(15, 23, 42, 0.12);
+
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.02),
+    0 8px 24px -16px rgba(15, 23, 42, 0.12);
 
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
+
+  isolation: isolate;
 }
+
+
+/* =========================================================
+   3. NAVBAR INNER
+   ========================================================= */
 
 .navbar-inner {
   width: 100%;
   max-width: 1280px;
+
   min-height: 76px;
 
   margin: 0 auto;
@@ -42,46 +75,67 @@
 
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 30px;
+
+  gap: 24px;
+
+  min-width: 0;
 }
 
-/* Visible keyboard focus everywhere in the navbar */
+
+/* =========================================================
+   4. ACCESSIBILITY
+   ========================================================= */
+
 .navbar a:focus-visible,
 .navbar button:focus-visible {
   outline: 2px solid var(--nav-blue);
   outline-offset: 3px;
 }
 
-/* ================================
-   LOGO
-================================ */
+
+/* =========================================================
+   5. LOGO
+   ========================================================= */
 
 .logo {
   display: flex;
   align-items: center;
+
   gap: 11px;
 
   color: var(--nav-ink);
   text-decoration: none;
 
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
+
+  white-space: nowrap;
 }
 
 .logo-mark {
   width: 38px;
   height: 38px;
 
+  min-width: 38px;
+  min-height: 38px;
+
   display: grid;
   place-items: center;
 
   border-radius: 11px;
 
-  background: linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(
+    145deg,
+    #3b82f6 0%,
+    #1d4ed8 100%
+  );
+
   color: #ffffff;
 
   font-size: 16px;
   font-weight: 700;
+
+  flex-shrink: 0;
 
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
@@ -95,39 +149,56 @@
 }
 
 .logo-text {
+  display: block;
+
   color: var(--nav-ink);
 
   font-size: 21px;
   font-weight: 700;
+
   letter-spacing: -0.04em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* ================================
-   DESKTOP NAV
-================================ */
+
+/* =========================================================
+   6. DESKTOP NAVIGATION
+   ========================================================= */
 
 .desktop-nav {
   display: flex;
   align-items: center;
-  gap: 34px;
+
+  gap: 30px;
+
+  flex: 1 1 auto;
+  min-width: 0;
+
+  justify-content: center;
 }
 
 .desktop-nav a {
   position: relative;
 
-  padding: 6px 0;
+  padding: 7px 0;
 
   color: var(--nav-muted);
+
   text-decoration: none;
 
   font-size: 14px;
   font-weight: 500;
+
   letter-spacing: 0.005em;
+
+  white-space: nowrap;
 
   transition: color 0.2s ease;
 }
 
-/* underline grows from the left on hover / active */
 .desktop-nav a::after {
   content: "";
 
@@ -135,11 +206,13 @@
 
   left: 0;
   right: 0;
-  bottom: -6px;
+
+  bottom: -5px;
 
   height: 2px;
 
   border-radius: 999px;
+
   background: var(--nav-blue);
 
   transform: scaleX(0);
@@ -158,15 +231,24 @@
   transform: scaleX(1);
 }
 
-/* ================================
-   DESKTOP ACTIONS
-================================ */
+
+/* =========================================================
+   7. DESKTOP ACTIONS
+   ========================================================= */
 
 .desktop-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+
+  gap: 9px;
+
+  flex: 0 0 auto;
 }
+
+
+/* =========================================================
+   8. COMMON ICON BUTTON
+   ========================================================= */
 
 .nav-icon-btn,
 .cart-btn {
@@ -177,12 +259,15 @@
   justify-content: center;
 
   border: 1px solid var(--nav-line);
-  border-radius: 999px;
+
+  border-radius: var(--nav-radius);
 
   background: #ffffff;
+
   color: #334155;
 
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04);
 
   transition:
     background 0.2s ease,
@@ -190,32 +275,44 @@
     border-color 0.2s ease,
     transform 0.25s var(--nav-ease),
     box-shadow 0.25s ease;
+
+  -webkit-tap-highlight-color: transparent;
 }
 
 .nav-icon-btn {
   width: 42px;
+  min-width: 42px;
+
   padding: 0;
+
   cursor: pointer;
 }
 
 .cart-btn {
   gap: 9px;
-  padding: 0 17px;
+
+  padding: 0 16px;
 
   text-decoration: none;
 
   font-size: 13px;
   font-weight: 600;
+
+  white-space: nowrap;
 }
 
 .nav-icon-btn:hover,
 .cart-btn:hover {
   background: var(--nav-blue);
+
   border-color: var(--nav-blue);
+
   color: #ffffff;
 
   transform: translateY(-2px);
-  box-shadow: 0 10px 22px -8px rgba(37, 99, 235, 0.5);
+
+  box-shadow:
+    0 10px 22px -8px rgba(37, 99, 235, 0.5);
 }
 
 .nav-icon-btn:active,
@@ -224,20 +321,31 @@
   transform: translateY(0) scale(0.97);
 }
 
+.nav-icon-btn svg,
+.cart-btn svg,
+.mobile-wishlist svg,
+.mobile-cart svg {
+  display: block;
+
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   9. CART ICON
+   ========================================================= */
+
 .cart-icon {
   font-size: 15px;
 }
 
-.nav-icon-btn svg,
-.cart-btn svg,
-.mobile-cart svg {
-  display: block;
-  flex-shrink: 0;
-}
 
-/* ================================
-   LOGIN BUTTON
-================================ */
+/* =========================================================
+   10. LOGIN BUTTON
+   ========================================================= */
 
 .login-btn {
   height: 42px;
@@ -246,18 +354,27 @@
   align-items: center;
   justify-content: center;
 
-  padding: 0 24px;
+  padding: 0 22px;
 
-  border-radius: 999px;
+  border: 0;
+  border-radius: var(--nav-radius);
 
-  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
+  background: linear-gradient(
+    145deg,
+    #3b82f6 0%,
+    #2563eb 55%,
+    #1d4ed8 100%
+  );
+
   color: #ffffff;
 
   text-decoration: none;
+
   white-space: nowrap;
 
   font-size: 13px;
   font-weight: 600;
+
   letter-spacing: 0.01em;
 
   box-shadow:
@@ -272,6 +389,7 @@
 
 .login-btn:hover {
   transform: translateY(-2px);
+
   filter: brightness(1.06);
 
   box-shadow:
@@ -279,60 +397,41 @@
     0 14px 26px -10px rgba(37, 99, 235, 0.7);
 }
 
-/* ================================
-   MOBILE ACTIONS
-================================ */
+
+/* =========================================================
+   11. MOBILE ACTIONS
+   ========================================================= */
 
 .mobile-actions {
   display: none;
 
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+
+  gap: 7px;
+
+  margin-left: auto;
+
+  flex: 0 0 auto;
+
+  min-width: 0;
 }
 
-.mobile-cart {
+
+/* =========================================================
+   12. MOBILE WISHLIST
+   ========================================================= */
+
+.mobile-wishlist {
   width: 42px;
   height: 42px;
+
+  min-width: 42px;
+  min-height: 42px;
 
   display: grid;
   place-items: center;
 
-  border: 1px solid var(--nav-line);
-  border-radius: 50%;
-
-  background: #ffffff;
-  color: var(--nav-blue);
-
-  text-decoration: none;
-
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-}
-
-.mobile-cart:hover {
-  background: var(--nav-blue-soft);
-  border-color: var(--nav-blue);
-}
-
-.mobile-cart:active {
-  transform: scale(0.94);
-}
-
-/* ================================
-   HAMBURGER
-================================ */
-
-.menu-btn {
-  width: 42px;
-  height: 42px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
-  gap: 5px;
   padding: 0;
 
   border: 1px solid var(--nav-line);
@@ -340,11 +439,131 @@
 
   background: #ffffff;
 
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  color: #334155;
 
   cursor: pointer;
 
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04);
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-wishlist:hover {
+  background: var(--nav-blue-soft);
+
+  border-color: #bfdbfe;
+
+  color: var(--nav-blue);
+}
+
+.mobile-wishlist:active {
+  transform: scale(0.94);
+}
+
+
+/* =========================================================
+   13. MOBILE CART
+   ========================================================= */
+
+.mobile-cart {
+  width: 42px;
+  height: 42px;
+
+  min-width: 42px;
+  min-height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  border: 1px solid var(--nav-line);
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  color: var(--nav-blue);
+
+  text-decoration: none;
+
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-cart:hover {
+  background: var(--nav-blue-soft);
+
+  border-color: #bfdbfe;
+
+  color: var(--nav-blue);
+}
+
+.mobile-cart:active {
+  transform: scale(0.94);
+}
+
+
+/* =========================================================
+   14. HAMBURGER BUTTON
+   ========================================================= */
+
+.menu-btn {
+  width: 42px;
+  height: 42px;
+
+  min-width: 42px;
+  min-height: 42px;
+
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 0;
+
+  border: 1px solid var(--nav-line);
+
+  border-radius: 50%;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04);
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-btn:hover {
+  background: var(--nav-blue-soft);
+
+  border-color: #bfdbfe;
 }
 
 .menu-btn:active {
@@ -353,12 +572,15 @@
 
 .menu-btn.open {
   background: var(--nav-blue-soft);
+
   border-color: #bfdbfe;
 }
 
 .menu-btn span {
   width: 17px;
   height: 2px;
+
+  display: block;
 
   border-radius: 999px;
 
@@ -381,211 +603,28 @@
   transform: translateY(-7px) rotate(-45deg);
 }
 
-/* ================================
-   MOBILE MENU
-   (hidden on desktop, animated on mobile)
-================================ */
 
-.mobile-menu {
-  display: none;
-  background: #ffffff;
-}
-
-.mobile-menu nav {
-  max-width: 1280px;
-
-  margin: 0 auto;
-  padding: 14px 20px 24px;
-
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.mobile-menu a {
-  padding: 15px 14px;
-
-  border-radius: 12px;
-
-  color: var(--nav-text);
-  text-decoration: none;
-
-  font-size: 15px;
-  font-weight: 500;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
-}
-
-.mobile-menu a:hover,
-.mobile-menu a.active {
-  background: var(--nav-blue-soft);
-  color: var(--nav-blue);
-}
-
-.mobile-menu a.active {
-  font-weight: 600;
-}
-
-.mobile-menu .mobile-login {
-  margin-top: 10px;
-
-  text-align: center;
-  font-weight: 600;
-
-  background: linear-gradient(145deg, #3b82f6 0%, #2563eb 55%, #1d4ed8 100%);
-  color: #ffffff;
-
-  box-shadow: 0 10px 22px -10px rgba(37, 99, 235, 0.65);
-}
-
-.mobile-menu .mobile-login:hover,
-.mobile-menu .mobile-login.active {
-  background: var(--nav-blue-dark);
-  color: #ffffff;
-}
-
-/* ================================
-   TABLET
-================================ */
-
-@media (max-width: 950px) {
-  .navbar-inner {
-    padding: 0 24px;
-    gap: 18px;
-  }
-
-  .desktop-nav {
-    gap: 22px;
-  }
-
-  .desktop-actions {
-    gap: 8px;
-  }
-
-  .cart-btn {
-    padding: 0 13px;
-  }
-
-  .login-btn {
-    padding: 0 18px;
-  }
-}
-
-/* ================================
-   MOBILE
-================================ */
-
-@media (max-width: 768px) {
-  .navbar-inner {
-    min-height: 68px;
-    padding: 0 20px;
-  }
-
-  .desktop-nav,
-  .desktop-actions {
-    display: none;
-  }
-
-  .mobile-actions {
-    display: flex;
-  }
-
-  /* smooth open / close using grid-row animation */
-  .mobile-menu {
-    display: grid;
-    grid-template-rows: 0fr;
-
-    border-top: 1px solid transparent;
-    visibility: hidden;
-
-    transition:
-      grid-template-rows 0.4s var(--nav-ease),
-      border-color 0.3s ease,
-      visibility 0s linear 0.4s;
-  }
-
-  .mobile-menu nav {
-    min-height: 0;
-    overflow: hidden;
-    max-height: calc(100dvh - 68px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
-  .mobile-menu.show {
-    grid-template-rows: 1fr;
-
-    border-top-color: var(--nav-line);
-    visibility: visible;
-
-    transition:
-      grid-template-rows 0.4s var(--nav-ease),
-      border-color 0.3s ease,
-      visibility 0s;
-  }
-}
-
-/* ================================
-   SMALL MOBILE
-================================ */
-
-@media (max-width: 480px) {
-  .navbar-inner {
-    min-height: 64px;
-    padding: 0 16px;
-  }
-
-  .logo-text {
-    font-size: 19px;
-  }
-
-  .logo-mark {
-    width: 36px;
-    height: 36px;
-  }
-
-  .mobile-cart,
-  .menu-btn {
-    width: 40px;
-    height: 40px;
-  }
-
-  .mobile-menu nav {
-    padding-left: 16px;
-    padding-right: 16px;
-    max-height: calc(100dvh - 64px);
-  }
-}
-
-/* ================================
-   VERY SMALL DEVICES
-================================ */
-
-@media (max-width: 360px) {
-  .logo-text {
-    display: none;
-  }
-
-  .navbar-inner {
-    padding: 0 12px;
-  }
-}
-
-/* ================================
-   CART ICON + BADGE
-================================ */
+/* =========================================================
+   15. CART BADGE
+   ========================================================= */
 
 .cart-icon-wrapper {
   position: relative;
+
+  width: 20px;
+  height: 20px;
+
   display: inline-flex;
+
   align-items: center;
   justify-content: center;
+
+  flex-shrink: 0;
 }
 
 .cart-count {
   position: absolute;
+
   top: -9px;
   right: -11px;
 
@@ -598,35 +637,776 @@
 
   padding: 0 5px;
 
+  border: 2px solid #ffffff;
+
   border-radius: 999px;
 
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--nav-blue);
 
-  border: 2px solid #ffffff;
+  color: #ffffff;
 
   font-size: 10px;
   font-weight: 700;
+
   line-height: 1;
 
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+  white-space: nowrap;
+
+  pointer-events: none;
+
+  box-shadow:
+    0 2px 6px rgba(37, 99, 235, 0.35);
+
+  z-index: 2;
 }
 
-/* badge stays readable when the cart button turns blue on hover */
 .cart-btn:hover .cart-count {
   background: #ffffff;
+
   color: var(--nav-blue);
+
   border-color: var(--nav-blue);
 }
 
-/* ================================
-   REDUCED MOTION
-================================ */
+
+/* =========================================================
+   16. MOBILE MENU BASE
+   ========================================================= */
+
+.mobile-menu {
+  display: none;
+
+  width: 100%;
+
+  background: #ffffff;
+
+  border-top: 1px solid transparent;
+
+  overflow: hidden;
+}
+
+.mobile-menu nav {
+  width: 100%;
+  max-width: 1280px;
+
+  margin: 0 auto;
+
+  padding: 14px 20px 24px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.mobile-menu a {
+  width: 100%;
+
+  min-height: 50px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 14px;
+
+  border-radius: 12px;
+
+  color: var(--nav-text);
+
+  text-decoration: none;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  overflow: hidden;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.mobile-menu a:hover,
+.mobile-menu a.active {
+  background: var(--nav-blue-soft);
+
+  color: var(--nav-blue);
+}
+
+.mobile-menu a.active {
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   17. MOBILE LOGIN
+   ========================================================= */
+
+.mobile-menu .mobile-login {
+  min-height: 50px;
+
+  margin-top: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  font-weight: 600;
+
+  background: linear-gradient(
+    145deg,
+    #3b82f6 0%,
+    #2563eb 55%,
+    #1d4ed8 100%
+  );
+
+  color: #ffffff;
+
+  box-shadow:
+    0 10px 22px -10px rgba(37, 99, 235, 0.65);
+}
+
+.mobile-menu .mobile-login:hover,
+.mobile-menu .mobile-login.active {
+  background: var(--nav-blue-dark);
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   18. LARGE LAPTOP
+   ========================================================= */
+
+@media (max-width: 1150px) {
+
+  .navbar-inner {
+    padding-left: 24px;
+    padding-right: 24px;
+
+    gap: 18px;
+  }
+
+  .desktop-nav {
+    gap: 23px;
+  }
+
+  .desktop-actions {
+    gap: 7px;
+  }
+
+  .cart-btn {
+    padding-left: 13px;
+    padding-right: 13px;
+  }
+
+  .login-btn {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+
+/* =========================================================
+   19. TABLET / SMALL LAPTOP
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .navbar-inner {
+    min-height: 70px;
+
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .desktop-nav {
+    gap: 18px;
+  }
+
+  .desktop-nav a {
+    font-size: 13px;
+  }
+
+  .nav-icon-btn {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .cart-btn {
+    height: 40px;
+
+    padding-left: 11px;
+    padding-right: 11px;
+
+    gap: 7px;
+  }
+
+  .login-btn {
+    height: 40px;
+
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+
+/* =========================================================
+   20. MOBILE <= 768px
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .navbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .navbar-inner {
+    min-height: 68px;
+
+    padding-left: 20px;
+    padding-right: 20px;
+
+    gap: 12px;
+  }
+
+  .desktop-nav,
+  .desktop-actions {
+    display: none;
+  }
+
+  .mobile-actions {
+    display: flex;
+  }
+
+  .mobile-menu {
+    display: grid;
+
+    grid-template-rows: 0fr;
+
+    visibility: hidden;
+
+    border-top-color: transparent;
+
+    transition:
+      grid-template-rows 0.35s var(--nav-ease),
+      border-color 0.25s ease,
+      visibility 0s linear 0.35s;
+  }
+
+  .mobile-menu nav {
+    min-height: 0;
+
+    max-height: calc(100dvh - 68px);
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-menu.show {
+    grid-template-rows: 1fr;
+
+    visibility: visible;
+
+    border-top-color: var(--nav-line);
+
+    transition:
+      grid-template-rows 0.35s var(--nav-ease),
+      border-color 0.25s ease,
+      visibility 0s;
+  }
+}
+
+
+/* =========================================================
+   21. MOBILE <= 600px
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .navbar-inner {
+    min-height: 64px;
+
+    padding-left: 16px;
+    padding-right: 16px;
+
+    gap: 10px;
+  }
+
+  .logo {
+    gap: 9px;
+
+    min-width: 0;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+
+    min-width: 36px;
+    min-height: 36px;
+
+    border-radius: 10px;
+  }
+
+  .logo-text {
+    font-size: 19px;
+  }
+
+  .mobile-wishlist,
+  .mobile-cart,
+  .menu-btn {
+    width: 40px;
+    height: 40px;
+
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .mobile-actions {
+    gap: 6px;
+  }
+
+  .mobile-menu nav {
+    padding:
+      12px
+      16px
+      24px;
+  }
+
+  .mobile-menu a {
+    min-height: 48px;
+
+    padding: 13px 14px;
+  }
+}
+
+
+/* =========================================================
+   22. SMALL PHONE <= 480px
+   ========================================================= */
+
+@media (max-width: 480px) {
+
+  .navbar-inner {
+    padding-left: 12px;
+    padding-right: 12px;
+
+    gap: 8px;
+  }
+
+  .logo {
+    gap: 8px;
+
+    flex: 1 1 auto;
+  }
+
+  .logo-mark {
+    width: 34px;
+    height: 34px;
+
+    min-width: 34px;
+    min-height: 34px;
+
+    font-size: 14px;
+  }
+
+  .logo-text {
+    max-width: 145px;
+
+    font-size: 18px;
+  }
+
+  .mobile-actions {
+    gap: 5px;
+  }
+
+  .mobile-wishlist,
+  .mobile-cart,
+  .menu-btn {
+    width: 39px;
+    height: 39px;
+
+    min-width: 39px;
+    min-height: 39px;
+  }
+
+  .mobile-wishlist svg,
+  .mobile-cart svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .menu-btn span {
+    width: 16px;
+  }
+
+  .mobile-menu nav {
+    padding-left: 12px;
+    padding-right: 12px;
+
+    max-height: calc(100dvh - 64px);
+  }
+
+  .mobile-menu a {
+    font-size: 14px;
+  }
+}
+
+
+/* =========================================================
+   23. VERY SMALL PHONE <= 400px
+   ========================================================= */
+
+@media (max-width: 400px) {
+
+  .navbar-inner {
+    padding-left: 10px;
+    padding-right: 10px;
+
+    gap: 6px;
+  }
+
+  .logo {
+    gap: 7px;
+  }
+
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .logo-text {
+    max-width: 120px;
+
+    font-size: 17px;
+  }
+
+  .mobile-actions {
+    gap: 4px;
+  }
+
+  .mobile-wishlist,
+  .mobile-cart,
+  .menu-btn {
+    width: 37px;
+    height: 37px;
+
+    min-width: 37px;
+    min-height: 37px;
+  }
+
+  .mobile-wishlist svg,
+  .mobile-cart svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .menu-btn span {
+    width: 15px;
+  }
+}
+
+
+/* =========================================================
+   24. ULTRA SMALL PHONE <= 360px
+   ========================================================= */
+
+@media (max-width: 360px) {
+
+  .navbar-inner {
+    padding-left: 8px;
+    padding-right: 8px;
+
+    gap: 5px;
+  }
+
+  .logo {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .logo-mark {
+    width: 31px;
+    height: 31px;
+
+    min-width: 31px;
+    min-height: 31px;
+  }
+
+  .logo-text {
+    max-width: 100px;
+
+    font-size: 16px;
+  }
+
+  .mobile-actions {
+    gap: 3px;
+  }
+
+  .mobile-wishlist,
+  .mobile-cart,
+  .menu-btn {
+    width: 36px;
+    height: 36px;
+
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .mobile-wishlist svg,
+  .mobile-cart svg {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+
+/* =========================================================
+   25. EXTREME SMALL WIDTH <= 320px
+   ========================================================= */
+
+@media (max-width: 320px) {
+
+  .navbar-inner {
+    padding-left: 6px;
+    padding-right: 6px;
+
+    gap: 4px;
+  }
+
+  .logo {
+    gap: 5px;
+  }
+
+  .logo-mark {
+    width: 29px;
+    height: 29px;
+
+    min-width: 29px;
+    min-height: 29px;
+
+    border-radius: 8px;
+
+    font-size: 12px;
+  }
+
+  .logo-text {
+    max-width: 82px;
+
+    font-size: 15px;
+  }
+
+  .mobile-actions {
+    gap: 2px;
+  }
+
+  .mobile-wishlist,
+  .mobile-cart,
+  .menu-btn {
+    width: 34px;
+    height: 34px;
+
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .mobile-wishlist svg,
+  .mobile-cart svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .menu-btn span {
+    width: 14px;
+  }
+
+  .cart-count {
+    top: -7px;
+    right: -8px;
+
+    min-width: 17px;
+    height: 17px;
+
+    padding: 0 4px;
+
+    font-size: 9px;
+  }
+}
+
+
+/* =========================================================
+   26. SHORT SCREEN / LANDSCAPE MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) and (orientation: landscape) {
+
+  .navbar-inner {
+    min-height: 60px;
+  }
+
+  .mobile-menu nav {
+    max-height: calc(100dvh - 60px);
+
+    padding-top: 8px;
+    padding-bottom: 16px;
+  }
+
+  .mobile-menu a {
+    min-height: 44px;
+
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .mobile-menu .mobile-login {
+    min-height: 44px;
+  }
+}
+
+
+/* =========================================================
+   27. SAFE AREA SUPPORT
+   iPhone notch / Dynamic Island / gesture areas
+   ========================================================= */
+
+@supports (padding: max(0px)) {
+
+  .navbar-inner {
+    padding-left: max(
+      32px,
+      env(safe-area-inset-left)
+    );
+
+    padding-right: max(
+      32px,
+      env(safe-area-inset-right)
+    );
+  }
+
+  @media (max-width: 1150px) {
+
+    .navbar-inner {
+      padding-left: max(
+        24px,
+        env(safe-area-inset-left)
+      );
+
+      padding-right: max(
+        24px,
+        env(safe-area-inset-right)
+      );
+    }
+  }
+
+  @media (max-width: 900px) {
+
+    .navbar-inner {
+      padding-left: max(
+        20px,
+        env(safe-area-inset-left)
+      );
+
+      padding-right: max(
+        20px,
+        env(safe-area-inset-right)
+      );
+    }
+  }
+
+  @media (max-width: 600px) {
+
+    .navbar-inner {
+      padding-left: max(
+        16px,
+        env(safe-area-inset-left)
+      );
+
+      padding-right: max(
+        16px,
+        env(safe-area-inset-right)
+      );
+    }
+  }
+
+  @media (max-width: 480px) {
+
+    .navbar-inner {
+      padding-left: max(
+        12px,
+        env(safe-area-inset-left)
+      );
+
+      padding-right: max(
+        12px,
+        env(safe-area-inset-right)
+      );
+    }
+  }
+}
+
+
+/* =========================================================
+   28. REDUCED MOTION
+   ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
   .navbar *,
   .navbar *::before,
   .navbar *::after {
     transition: none !important;
+    animation: none !important;
   }
+}
+
+
+/* =========================================================
+   29. TOUCH DEVICE BEHAVIOUR
+   ========================================================= */
+
+@media (hover: none) {
+
+  .nav-icon-btn:hover,
+  .cart-btn:hover,
+  .login-btn:hover,
+  .mobile-wishlist:hover,
+  .mobile-cart:hover,
+  .menu-btn:hover {
+    transform: none;
+  }
+
+  .desktop-nav a:hover::after {
+    transform: scaleX(0);
+  }
+}
+
+
+/* =========================================================
+   30. FINAL OVERFLOW PROTECTION
+   ========================================================= */
+
+.navbar {
+  overflow: visible;
+}
+
+.navbar-inner {
+  overflow: visible;
+}
+
+.mobile-menu {
+  overflow-x: hidden;
+}
+
+.mobile-menu nav {
+  overflow-x: hidden;
 }
