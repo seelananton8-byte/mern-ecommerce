@@ -310,6 +310,12 @@ export default function ProductDetails() {
 
   const currentImage = images[activeImage] || product.thumbnail;
 
+  const averageRating =
+  reviews.length > 0
+    ? reviews.reduce((total, review) => total + Number(review.rating), 0) /
+      reviews.length
+    : Number(product.rating) || 4.5;
+
   const increaseQuantity = () => {
     if (quantity < stock) {
       setQuantity((current) => current + 1);
@@ -383,8 +389,16 @@ export default function ProductDetails() {
             <span className="rating-stars">
               <StarIcon />
             </span>
-            <strong>{product.rating?.toFixed(1) || "4.5"}</strong>
-            <span>Customer rating</span>
+
+            <strong>{averageRating.toFixed(1)}</strong>
+
+            <span>
+              {reviews.length > 0
+                ? `${reviews.length} customer ${
+                    reviews.length === 1 ? "review" : "reviews"
+                  }`
+                : "Customer rating"}
+            </span>
           </div>
 
           <div className="details-price">{formatPrice(product.price)}</div>

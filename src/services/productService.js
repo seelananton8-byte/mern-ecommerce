@@ -1,9 +1,12 @@
-const API_URL = "https://dummyjson.com/products";
+import { apiRequest } from "./api";
+
 const CONVERT_USD_TO_INR = true;
 const USD_TO_INR_RATE = 85;
 
 function withLocalPrice(product) {
-  if (!CONVERT_USD_TO_INR || !product) return product;
+  if (!CONVERT_USD_TO_INR || !product) {
+    return product;
+  }
 
   return {
     ...product,
@@ -12,25 +15,15 @@ function withLocalPrice(product) {
 }
 
 export async function getProducts() {
-  const response = await fetch(API_URL);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch products");
-  }
-
-  const data = await response.json();
+  const data = await apiRequest("/products");
 
   return (data.products || []).map(withLocalPrice);
 }
 
 export async function getProductById(id) {
-  const response = await fetch(`${API_URL}/${encodeURIComponent(id)}`);
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch product");
-  }
-
-  const data = await response.json();
+  const data = await apiRequest(
+    `/products/${encodeURIComponent(id)}`
+  );
 
   return withLocalPrice(data);
 }
