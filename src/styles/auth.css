@@ -18,6 +18,9 @@
   align-items: center;
   justify-content: center;
 
+  width: 100%;
+  max-width: 100%;
+
   padding: 56px 24px;
 
   background:
@@ -32,9 +35,9 @@
       #ffffff 55%
     );
 
-  /* IMPORTANT:
-     Prevent input/button width overflow */
   box-sizing: border-box;
+
+  overflow-x: clip;
 }
 
 
@@ -69,6 +72,7 @@
 .auth-card {
   width: 100%;
   max-width: 460px;
+  min-width: 0;
 
   padding: 44px;
 
@@ -80,8 +84,6 @@
   box-shadow:
     0 2px 4px rgba(15, 23, 42, 0.03),
     0 32px 64px -28px rgba(15, 23, 42, 0.22);
-
-  min-width: 0;
 }
 
 
@@ -95,6 +97,7 @@
   justify-content: center;
 
   gap: 11px;
+
   margin-bottom: 30px;
 
   color: var(--a-ink);
@@ -103,13 +106,22 @@
   font-weight: 700;
 
   letter-spacing: -0.03em;
+
+  min-width: 0;
 }
+
+.auth-brand strong {
+  min-width: 0;
+
+  overflow-wrap: anywhere;
+}
+
 
 .auth-logo {
   width: 38px;
   height: 38px;
 
-  flex-shrink: 0;
+  flex: 0 0 38px;
 
   display: grid;
   place-items: center;
@@ -138,8 +150,10 @@
 ================================= */
 
 .auth-heading {
-  text-align: center;
+  width: 100%;
   min-width: 0;
+
+  text-align: center;
 }
 
 .auth-heading > span {
@@ -153,7 +167,6 @@
   font-weight: 700;
 
   letter-spacing: 0.16em;
-
   text-transform: uppercase;
 }
 
@@ -177,6 +190,8 @@
 
   font-size: 14px;
   line-height: 1.6;
+
+  overflow-wrap: anywhere;
 }
 
 
@@ -186,24 +201,24 @@
 
 .auth-form {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
   display: flex;
   flex-direction: column;
 
   gap: 20px;
-
-  min-width: 0;
 }
 
 .auth-group {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
   display: flex;
   flex-direction: column;
 
   gap: 8px;
-
-  min-width: 0;
 }
 
 .auth-group label,
@@ -286,8 +301,10 @@
 ================================= */
 
 .auth-error {
-  margin: 0;
+  width: 100%;
+  max-width: 100%;
 
+  margin: 0;
   padding: 12px 14px;
 
   border: 1px solid #fecaca;
@@ -298,8 +315,9 @@
   color: #b91c1c;
 
   font-size: 13px;
-
   line-height: 1.5;
+
+  overflow-wrap: anywhere;
 }
 
 
@@ -309,22 +327,27 @@
 
 .password-label {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   gap: 12px;
-
-  min-width: 0;
 }
 
 .password-label label {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .password-label button {
-  flex-shrink: 0;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+
+  flex: 0 0 auto;
 
   padding: 4px 0;
 
@@ -335,7 +358,6 @@
   color: var(--a-blue);
 
   font-family: inherit;
-
   font-size: 13px;
   font-weight: 600;
 
@@ -361,6 +383,8 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+
+  isolation: isolate;
 }
 
 
@@ -375,7 +399,9 @@
   max-width: 100%;
   min-width: 0;
 
-  padding-right: 56px;
+  height: 50px;
+
+  padding: 0 56px 0 16px;
 }
 
 
@@ -387,7 +413,7 @@
   position: absolute;
 
   top: 50%;
-  right: 6px;
+  right: 5px;
 
   width: 40px;
   height: 40px;
@@ -420,7 +446,9 @@
   width: 20px;
   height: 20px;
 
-  flex-shrink: 0;
+  flex: 0 0 20px;
+
+  pointer-events: none;
 }
 
 
@@ -436,8 +464,7 @@
 
   width: fit-content;
   max-width: 100%;
-
-  min-height: 28px;
+  min-height: 44px;
 
   color: var(--a-muted);
 
@@ -460,7 +487,11 @@
 }
 
 .remember-row span {
+  min-width: 0;
+
   line-height: 1.4;
+
+  overflow-wrap: anywhere;
 }
 
 
@@ -473,6 +504,8 @@
   max-width: 100%;
 
   min-height: 52px;
+
+  padding: 0 16px;
 
   border: 0;
   border-radius: 14px;
@@ -488,7 +521,6 @@
   color: #ffffff;
 
   font-family: inherit;
-
   font-size: 15px;
   font-weight: 600;
 
@@ -521,7 +553,6 @@
 
 .auth-submit:disabled {
   opacity: 0.65;
-
   cursor: not-allowed;
 }
 
@@ -532,6 +563,7 @@
 
 .auth-divider {
   width: 100%;
+  max-width: 100%;
 
   display: flex;
   align-items: center;
@@ -545,7 +577,7 @@
 .auth-divider::after {
   content: "";
 
-  flex: 1;
+  flex: 1 1 0;
 
   min-width: 0;
 
@@ -555,7 +587,7 @@
 }
 
 .auth-divider span {
-  flex-shrink: 0;
+  flex: 0 0 auto;
 
   color: #94a3b8;
 
@@ -570,6 +602,7 @@
 .google-btn {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
 
   min-height: 50px;
 
@@ -589,13 +622,10 @@
   color: #334155;
 
   font-family: inherit;
-
   font-size: 14px;
   font-weight: 600;
 
   cursor: pointer;
-
-  white-space: nowrap;
 
   transition:
     border-color 0.2s ease,
@@ -632,6 +662,9 @@
 ================================= */
 
 .auth-switch {
+  width: 100%;
+  max-width: 100%;
+
   margin: 26px 0 0;
 
   color: var(--a-muted);
@@ -639,8 +672,9 @@
   text-align: center;
 
   font-size: 14px;
-
   line-height: 1.6;
+
+  overflow-wrap: anywhere;
 }
 
 .auth-switch a {
@@ -657,6 +691,30 @@
   text-decoration: underline;
 
   text-underline-offset: 3px;
+}
+
+
+/* =================================
+   DESKTOP HOVER ONLY
+================================= */
+
+@media (hover: hover) and (pointer: fine) {
+  .auth-group input:hover {
+    border-color: #b9c6dc;
+  }
+
+  .password-input > button:hover {
+    background: var(--a-blue-soft);
+    color: var(--a-blue);
+  }
+
+  .auth-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  .google-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 
@@ -727,7 +785,9 @@
 
     height: 50px;
 
-    /* 16px prevents iOS zoom */
+    /*
+      16px prevents iOS browser zoom
+    */
     font-size: 16px;
   }
 
@@ -748,8 +808,8 @@
   .password-input > button {
     right: 4px;
 
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
   }
 
   .auth-submit,
@@ -774,6 +834,19 @@
     padding: 28px 18px;
 
     border-radius: 20px;
+  }
+
+  .auth-brand {
+    gap: 9px;
+
+    font-size: 19px;
+  }
+
+  .auth-logo {
+    width: 36px;
+    height: 36px;
+
+    flex-basis: 36px;
   }
 
   .auth-heading h1 {
@@ -824,12 +897,16 @@
   }
 
   .auth-brand {
+    gap: 8px;
+
     font-size: 18px;
   }
 
   .auth-logo {
     width: 34px;
     height: 34px;
+
+    flex-basis: 34px;
   }
 
   .auth-heading h1 {
@@ -842,14 +919,152 @@
 
   .password-label {
     align-items: flex-start;
+
+    gap: 6px;
+  }
+
+  .password-label label {
+    font-size: 12px;
   }
 
   .password-label button {
     font-size: 11px;
   }
 
-  .google-btn {
+  .auth-group label {
     font-size: 12px;
+  }
+
+  .google-btn {
+    min-height: 48px;
+
+    padding-left: 10px;
+    padding-right: 10px;
+
+    gap: 7px;
+
+    font-size: 12px;
+  }
+
+  .google-btn svg {
+    width: 18px;
+    height: 18px;
+
+    flex-basis: 18px;
+  }
+
+  .auth-switch {
+    font-size: 12px;
+  }
+}
+
+
+/* =================================
+   EXTRA SMALL - 320px SAFETY
+================================= */
+
+@media (max-width: 320px) {
+  .auth-page {
+    padding-left: 6px;
+    padding-right: 6px;
+    padding-bottom: 32px;
+  }
+
+  .auth-card {
+    padding: 22px 12px;
+
+    border-radius: 16px;
+  }
+
+  .auth-brand {
+    font-size: 17px;
+  }
+
+  .auth-heading h1 {
+    font-size: 20px;
+  }
+
+  .auth-heading p {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .password-label {
+    flex-wrap: wrap;
+  }
+
+  .password-label button {
+    margin-left: auto;
+  }
+
+  .password-input input {
+    padding-left: 13px;
+    padding-right: 50px;
+  }
+
+  .password-input > button {
+    right: 3px;
+
+    width: 44px;
+    height: 44px;
+  }
+
+  .auth-submit {
+    min-height: 50px;
+  }
+
+  .google-btn {
+    white-space: normal;
+
+    min-height: 50px;
+
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .auth-switch {
+    line-height: 1.5;
+  }
+}
+
+
+/* =================================
+   LANDSCAPE MOBILE
+================================= */
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .auth-page {
+    align-items: flex-start;
+
+    padding-top: 20px;
+    padding-bottom: 28px;
+  }
+
+  .auth-card {
+    margin: 0 auto;
+
+    padding-top: 26px;
+    padding-bottom: 26px;
+  }
+
+  .auth-brand {
+    margin-bottom: 18px;
+  }
+
+  .auth-heading p {
+    margin-bottom: 20px;
+  }
+
+  .auth-form {
+    gap: 14px;
+  }
+
+  .auth-divider {
+    margin: 18px 0;
+  }
+
+  .auth-switch {
+    margin-top: 18px;
   }
 }
 
@@ -870,4 +1085,26 @@
   .google-btn:hover {
     transform: none;
   }
+}
+
+
+/* =================================
+   FINAL OVERFLOW SAFETY
+================================= */
+
+.auth-page img,
+.auth-page svg,
+.auth-page input,
+.auth-page button {
+  max-width: 100%;
+}
+
+.auth-page button {
+  min-width: 0;
+}
+
+.auth-page input,
+.auth-page textarea,
+.auth-page select {
+  max-width: 100%;
 }

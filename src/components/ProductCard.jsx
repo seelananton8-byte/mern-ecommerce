@@ -57,8 +57,6 @@ export default function ProductCard({ product }) {
       <Link
         to={`/products/${product.id}`}
         className="product-image-wrapper"
-        tabIndex={-1}
-        aria-hidden="true"
       >
         {imgFailed || !product.thumbnail ? (
           <span className="product-image-fallback">

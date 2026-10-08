@@ -27,7 +27,7 @@ function App() {
       <ScrollToTop />
       <Navbar />
 
-      <main style={{ minHeight: "100vh" }}>
+      <main>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />

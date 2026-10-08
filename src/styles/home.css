@@ -40,7 +40,6 @@
   outline-offset: 3px;
 }
 
-
 /* =========================================================
    HERO
    ========================================================= */
@@ -49,12 +48,14 @@
   width: 100%;
   max-width: 1280px;
   min-height: 600px;
-
   margin: 0 auto;
   padding: 72px 32px 80px;
 
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns:
+    minmax(0, 1.05fr)
+    minmax(0, 0.95fr);
+
   align-items: center;
   gap: 50px;
 }
@@ -69,12 +70,12 @@
   margin: 0 0 22px;
 
   color: var(--h-ink);
-
   font-size: clamp(44px, 6vw, 76px);
   line-height: 1;
   letter-spacing: -0.055em;
 
   overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .hero-content h1 span {
@@ -84,16 +85,18 @@
 .hero-content p {
   width: 100%;
   max-width: 500px;
-
   margin: 0 0 32px;
 
   color: var(--h-muted);
-
   font-size: 17px;
   line-height: 1.7;
+
+  overflow-wrap: break-word;
 }
 
 .hero-actions {
+  width: 100%;
+
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -113,10 +116,8 @@
   border-radius: 999px;
 
   text-decoration: none;
-
   font-size: 14px;
   font-weight: 600;
-
   white-space: nowrap;
 
   transition:
@@ -150,7 +151,6 @@
 
 .secondary-btn {
   border: 1px solid #d3dcea;
-
   background: #ffffff;
   color: #334155;
 }
@@ -166,7 +166,6 @@
 .cta-button:active {
   transform: translateY(0) scale(0.98);
 }
-
 
 /* =========================================================
    HERO VISUAL
@@ -227,13 +226,14 @@
   box-shadow:
     inset 0 2px 0 rgba(255, 255, 255, 0.25),
     0 36px 70px -24px rgba(37, 99, 235, 0.55);
+
+  overflow: hidden;
 }
 
 .hero-product-image {
   width: 82%;
   height: 82%;
   max-width: 100%;
-
   object-fit: contain;
 
   filter:
@@ -282,7 +282,6 @@
 
 .hero-floating-card span {
   color: var(--h-blue);
-
   font-size: 12px;
   font-weight: 600;
 }
@@ -296,7 +295,6 @@
   -webkit-box-orient: vertical;
 
   color: var(--h-ink);
-
   font-size: 14px;
   line-height: 1.35;
 
@@ -305,12 +303,10 @@
 
 .hero-floating-card em {
   color: var(--h-muted);
-
   font-size: 13px;
   font-style: normal;
   font-weight: 600;
 }
-
 
 /* =========================================================
    FEATURES
@@ -333,8 +329,8 @@
 
   display: flex;
   align-items: center;
-  gap: 16px;
 
+  gap: 16px;
   padding: 22px;
 
   border: 1px solid var(--h-line);
@@ -348,6 +344,7 @@
 
 .feature-card > div:last-child {
   min-width: 0;
+  flex: 1;
 }
 
 .feature-icon {
@@ -371,19 +368,19 @@
   font-size: 15px;
   line-height: 1.3;
   letter-spacing: -0.01em;
+
+  overflow-wrap: break-word;
 }
 
 .feature-card p {
   margin: 0;
 
   color: var(--h-muted);
-
   font-size: 13px;
   line-height: 1.5;
 
   overflow-wrap: break-word;
 }
-
 
 /* =========================================================
    SECTION HEADING
@@ -412,7 +409,6 @@
 
 .section-heading h2 {
   min-width: 0;
-
   margin: 0;
 
   color: var(--h-ink);
@@ -420,6 +416,8 @@
   font-size: clamp(26px, 3.4vw, 34px);
   line-height: 1.15;
   letter-spacing: -0.04em;
+
+  overflow-wrap: break-word;
 }
 
 .section-heading a {
@@ -428,7 +426,6 @@
   padding: 6px 0;
 
   color: var(--h-blue);
-
   text-decoration: none;
 
   font-size: 14px;
@@ -441,7 +438,6 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-
 
 /* =========================================================
    FEATURED PRODUCTS
@@ -467,7 +463,6 @@
   border-radius: 20px;
 
   background: #ffffff;
-
   color: inherit;
   text-decoration: none;
 
@@ -550,6 +545,7 @@
   line-height: 1.4;
 
   display: -webkit-box;
+
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 
@@ -564,9 +560,11 @@
 
   font-size: 18px;
   line-height: 1.25;
-  letter-spacing: -0.02em;
-}
 
+  letter-spacing: -0.02em;
+
+  overflow-wrap: anywhere;
+}
 
 /* =========================================================
    SKELETON
@@ -633,7 +631,6 @@
   }
 }
 
-
 /* =========================================================
    ERROR STATE
    ========================================================= */
@@ -667,6 +664,8 @@
 
   font-size: 14px;
   line-height: 1.6;
+
+  overflow-wrap: break-word;
 }
 
 .featured-error button {
@@ -699,7 +698,6 @@
   transform: scale(0.97);
 }
 
-
 /* =========================================================
    CATEGORIES
    ========================================================= */
@@ -709,6 +707,7 @@
 
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+
   gap: 16px;
 }
 
@@ -789,7 +788,6 @@
   overflow-wrap: break-word;
 }
 
-
 /* =========================================================
    CTA
    ========================================================= */
@@ -799,6 +797,7 @@
   max-width: 1216px;
 
   margin: 0 auto 60px;
+
   padding: 56px 52px;
 
   display: flex;
@@ -828,6 +827,8 @@
   font-size: clamp(30px, 4vw, 40px);
   line-height: 1.1;
   letter-spacing: -0.04em;
+
+  overflow-wrap: break-word;
 }
 
 .cta-button {
@@ -863,7 +864,6 @@
   transform: translateY(-2px);
 }
 
-
 /* =========================================================
    DESKTOP / REAL HOVER ONLY
    ========================================================= */
@@ -894,7 +894,6 @@
   }
 }
 
-
 /* =========================================================
    LARGE TABLET
    ========================================================= */
@@ -916,7 +915,6 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
-
 
 /* =========================================================
    TABLET
@@ -968,7 +966,6 @@
   }
 }
 
-
 /* =========================================================
    SMALL TABLET / LARGE MOBILE
    ========================================================= */
@@ -983,7 +980,6 @@
   }
 }
 
-
 /* =========================================================
    MOBILE
    ========================================================= */
@@ -991,7 +987,6 @@
 @media (max-width: 600px) {
   .hero-section {
     padding: 40px 20px 48px;
-
     gap: 20px;
   }
 
@@ -1055,7 +1050,6 @@
   .featured-section,
   .categories-section {
     padding: 0 20px;
-
     margin-bottom: 64px;
   }
 
@@ -1112,7 +1106,6 @@
 
   .category-card h3 {
     margin-top: 20px;
-
     font-size: 18px;
   }
 
@@ -1143,7 +1136,6 @@
     width: 100%;
   }
 }
-
 
 /* =========================================================
    PHONE PORTRAIT
@@ -1285,7 +1277,6 @@
   }
 }
 
-
 /* =========================================================
    VERY SMALL PHONES
    ========================================================= */
@@ -1358,6 +1349,10 @@
     font-size: 11px;
   }
 
+  .section-heading {
+    gap: 8px;
+  }
+
   .section-heading h2 {
     font-size: 22px;
   }
@@ -1395,6 +1390,7 @@
   .category-card {
     min-height: 145px;
     padding: 13px;
+
     border-radius: 15px;
   }
 
@@ -1402,6 +1398,7 @@
     width: 38px;
     height: 38px;
     flex-basis: 38px;
+
     border-radius: 12px;
   }
 
@@ -1430,11 +1427,9 @@
 
   .cta-button {
     min-height: 48px;
-
     font-size: 13px;
   }
 }
-
 
 /* =========================================================
    EXTRA SMALL DEVICES
@@ -1469,8 +1464,16 @@
     padding: 9px 10px;
   }
 
+  .hero-floating-card span {
+    font-size: 9px;
+  }
+
   .hero-floating-card strong {
-    font-size: 10.5px;
+    font-size: 10px;
+  }
+
+  .hero-floating-card em {
+    font-size: 10px;
   }
 
   .features-section,
@@ -1480,6 +1483,18 @@
     padding-right: 10px;
   }
 
+  .section-heading {
+    gap: 6px;
+  }
+
+  .section-heading h2 {
+    font-size: 20px;
+  }
+
+  .section-heading a {
+    font-size: 11px;
+  }
+
   .featured-grid,
   .category-grid {
     gap: 7px;
@@ -1487,6 +1502,10 @@
 
   .featured-info {
     padding: 9px;
+  }
+
+  .featured-info span {
+    font-size: 9px;
   }
 
   .featured-info h3 {
@@ -1512,6 +1531,7 @@
 
   .home-cta {
     width: calc(100% - 20px);
+
     padding: 24px 15px;
   }
 
@@ -1520,14 +1540,59 @@
   }
 }
 
+/* =========================================================
+   ULTRA SMALL PHONES
+   Better card readability instead of squeezing 2 columns
+   ========================================================= */
+
+@media (max-width: 300px) {
+  .featured-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .section-heading a {
+    padding-top: 0;
+  }
+
+  .hero-floating-card {
+    position: relative;
+
+    right: auto;
+    bottom: auto;
+
+    width: min(150px, 70%);
+
+    margin-top: -20px;
+    justify-self: end;
+  }
+
+  .hero-visual {
+    min-height: 290px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
 
 /* =========================================================
    LANDSCAPE MOBILE
    ========================================================= */
 
-@media (max-width: 900px) and (orientation: landscape) {
+@media (min-width: 601px) and (max-width: 900px) and (orientation: landscape) {
   .hero-section {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(280px, 0.8fr);
 
     min-height: auto;
 
@@ -1564,7 +1629,6 @@
   }
 }
 
-
 /* =========================================================
    REDUCED MOTION
    ========================================================= */
@@ -1574,12 +1638,13 @@
   .home-page *::before,
   .home-page *::after {
     scroll-behavior: auto !important;
+
     transition: none !important;
+
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
 }
-
 
 /* =========================================================
    FINAL OVERFLOW PROTECTION
@@ -1597,6 +1662,12 @@
 .home-page h2,
 .home-page h3,
 .home-page p {
+  max-width: 100%;
+}
+
+.home-page *,
+.home-page *::before,
+.home-page *::after {
   max-width: 100%;
 }
 
