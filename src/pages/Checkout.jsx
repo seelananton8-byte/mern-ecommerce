@@ -130,22 +130,44 @@ export default function Checkout() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (submitting) return;
+  if (submitting) return;
 
-    if (cartItems.length === 0) {
-      setError("Your cart is empty.");
-      return;
-    }
+  if (cartItems.length === 0) {
+    setError("Your cart is empty.");
+    return;
+  }
 
-    setError("");
-    setSubmitting(true);
+  setError("");
 
-    clearCart();
-
-    navigate("/order-success");
+  const order = {
+    id: `ORD-${Date.now()}`,
+    name: formData.name.trim(),
+    email: formData.email.trim(),
+    phone: formData.phone,
+    address: formData.address.trim(),
+    city: formData.city.trim(),
+    pincode: formData.pincode,
+    items: cartItems.map((item) => ({ ...item })),
+    itemCount: cartItems.reduce(
+      (total, item) => total + item.quantity,
+      0
+    ),
+    total: cartTotal,
+    status: "Confirmed",
+    paymentStatus: "Pending",
+    createdAt: new Date().toISOString(),
   };
+
+  setSubmitting(true);
+
+  clearCart();
+
+  navigate("/order-success", {
+    state: { order },
+  });
+};
 
   if (cartItems.length === 0) {
     return (

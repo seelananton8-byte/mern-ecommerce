@@ -14,7 +14,20 @@ export async function apiRequest(endpoint, options = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    let message = `API request failed: ${response.status}`;
+
+    try {
+      const errorData = await response.json();
+      message = errorData.message || message;
+    } catch {
+      // Keep the default error message if no JSON response exists.
+    }
+
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return null;
   }
 
   return response.json();
