@@ -770,3 +770,13 @@
 .product-card svg {
   max-width: 100%;
 }
+
+.wishlist-btn.active {
+  color: #e11d48;
+}
+
+.wishlist-btn.active svg {
+  fill: currentColor;
+}
+
+

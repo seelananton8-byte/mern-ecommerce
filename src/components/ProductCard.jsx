@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useWishlist } from "../context/WishlistContext.jsx";
 import "../styles/product-card.css";
-
-/* ---------- Inline SVG icons ---------- */
 
 const StarIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -10,12 +9,12 @@ const StarIcon = () => (
   </svg>
 );
 
-const HeartIcon = () => (
+const HeartIcon = ({ filled = false }) => (
   <svg
     width="18"
     height="18"
     viewBox="0 0 24 24"
-    fill="none"
+    fill={filled ? "currentColor" : "none"}
     stroke="currentColor"
     strokeWidth="1.8"
     strokeLinecap="round"
@@ -47,13 +46,15 @@ const ImageIcon = () => (
 export default function ProductCard({ product }) {
   const [imgFailed, setImgFailed] = useState(false);
 
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const isWishlisted = isInWishlist(product.id);
+
   const inStock = product.stock > 0;
   const price = Number(product.price || 0);
   const category = String(product.category || "").replace(/-/g, " ");
 
   return (
     <article className="product-card">
-      {/* Product Image */}
       <Link
         to={`/products/${product.id}`}
         className="product-image-wrapper"
@@ -75,7 +76,6 @@ export default function ProductCard({ product }) {
         <span className="view-product">View product</span>
       </Link>
 
-      {/* Product Info */}
       <div className="product-info">
         <span className="product-category">{category}</span>
 
@@ -101,10 +101,14 @@ export default function ProductCard({ product }) {
 
           <button
             type="button"
-            className="wishlist-btn"
-            aria-label="Add to wishlist"
+            className={`wishlist-btn ${isWishlisted ? "active" : ""}`}
+            aria-label={
+              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+            }
+            aria-pressed={isWishlisted}
+            onClick={() => toggleWishlist(product)}
           >
-            <HeartIcon />
+            <HeartIcon filled={isWishlisted} />
           </button>
         </div>
       </div>

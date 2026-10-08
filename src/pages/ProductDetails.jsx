@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
 import { useCart } from "../context/CardContext.jsx";
 import "../styles/product-details.css";
+import "../styles/product-reviews.css";
 
 /* ---------- Inline SVG icons ---------- */
 
@@ -23,7 +24,13 @@ const Icon = ({ children, size = 20, strokeWidth = 1.8 }) => (
 );
 
 const StarIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    aria-hidden="true"
+  >
     <path d="M12 2.8l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.6l-5.8 3.1 1.1-6.5L2.6 9.6l6.5-.9L12 2.8z" />
   </svg>
 );
@@ -81,7 +88,24 @@ const AlertIcon = () => (
   </Icon>
 );
 
-const formatPrice = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+const formatPrice = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+/* ---------- Review storage helpers ---------- */
+
+const loadProductReviews = (productId) => {
+  if (!productId) return [];
+
+  try {
+    const saved = localStorage.getItem(`product-reviews-${productId}`);
+    const parsed = saved ? JSON.parse(saved) : [];
+
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Unable to load reviews:", error);
+    return [];
+  }
+};
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -96,13 +120,45 @@ export default function ProductDetails() {
   const [imageFailed, setImageFailed] = useState(false);
   const [added, setAdded] = useState(false);
 
-  const addedTimer = useRef(null);
+  // Load reviews for the current product when state initializes.
+  const [reviews, setReviews] = useState(() => loadProductReviews(id));
 
+  const [reviewName, setReviewName] = useState("");
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewMessage, setReviewMessage] = useState("");
+
+  const addedTimer = useRef(null);
+  const reviewStorageKey = `product-reviews-${id}`;
+  const loadedReviewKey = useRef(reviewStorageKey);
+
+  // Load the correct reviews when navigating to another product.
+  useEffect(() => {
+    loadedReviewKey.current = reviewStorageKey;
+    setReviews(loadProductReviews(id));
+    setReviewMessage("");
+    setReviewName("");
+    setReviewText("");
+    setReviewRating(5);
+  }, [id, reviewStorageKey]);
+
+  // Save reviews only after the current product's reviews are loaded.
+  useEffect(() => {
+    if (loadedReviewKey.current !== reviewStorageKey) return;
+
+    try {
+      localStorage.setItem(reviewStorageKey, JSON.stringify(reviews));
+    } catch (error) {
+      console.error("Unable to save reviews:", error);
+      setReviewMessage("Could not save the review in this browser.");
+    }
+  }, [reviews, reviewStorageKey]);
+
+  // Load product details.
   useEffect(() => {
     let ignore = false;
 
     async function loadProduct() {
-      // reset everything when the product id changes
       setLoading(true);
       setError("");
       setQuantity(1);
@@ -112,15 +168,21 @@ export default function ProductDetails() {
 
       try {
         const data = await getProductById(id);
-        if (!ignore) setProduct(data);
+
+        if (!ignore) {
+          setProduct(data);
+        }
       } catch (err) {
         console.error(err);
+
         if (!ignore) {
           setProduct(null);
           setError("Unable to load product.");
         }
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
 
@@ -131,17 +193,81 @@ export default function ProductDetails() {
     };
   }, [id]);
 
-  /* clear the "Added" timer when leaving the page */
+  // Clear the cart notification timer when leaving the page.
   useEffect(() => {
     return () => clearTimeout(addedTimer.current);
   }, []);
 
+  const handleReviewSubmit = (event) => {
+    event.preventDefault();
+
+    const name = reviewName.trim();
+    const text = reviewText.trim();
+
+    if (!name || !text) {
+      setReviewMessage("Please enter your name and review.");
+      return;
+    }
+
+    const newReview = {
+      id: `${Date.now()}-${Math.random()}`,
+      name,
+      text,
+      rating: reviewRating,
+      date: new Date().toLocaleDateString("en-IN"),
+    };
+
+    // Save immediately, then update the displayed reviews.
+    try {
+      const saved = localStorage.getItem(reviewStorageKey);
+      const parsed = saved ? JSON.parse(saved) : [];
+      const existingReviews = Array.isArray(parsed) ? parsed : [];
+      const updatedReviews = [newReview, ...existingReviews];
+
+      localStorage.setItem(
+        reviewStorageKey,
+        JSON.stringify(updatedReviews)
+      );
+
+      loadedReviewKey.current = reviewStorageKey;
+      setReviews(updatedReviews);
+      setReviewName("");
+      setReviewText("");
+      setReviewRating(5);
+      setReviewMessage("Your review was added successfully.");
+    } catch (error) {
+      console.error("Unable to save review:", error);
+      setReviewMessage("Unable to save your review. Please try again.");
+    }
+  };
+
+  const selectImage = (index) => {
+    setActiveImage(index);
+    setImageFailed(false);
+  };
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+
+    setAdded(true);
+    clearTimeout(addedTimer.current);
+    addedTimer.current = setTimeout(() => setAdded(false), 1800);
+  };
+
+  const handleBuyNow = () => {
+    addToCart(product, quantity);
+    navigate("/checkout");
+  };
+
   if (loading) {
     return (
       <main className="product-details-page">
-        <div className="details-loading" aria-busy="true" aria-label="Loading product">
+        <div
+          className="details-loading"
+          aria-busy="true"
+          aria-label="Loading product"
+        >
           <div className="loading-image"></div>
-
           <div className="loading-info">
             <div className="loading-line short"></div>
             <div className="loading-line title"></div>
@@ -163,10 +289,8 @@ export default function ProductDetails() {
           <div className="details-error-icon">
             <AlertIcon />
           </div>
-
           <h2>Product not found</h2>
           <p>{error || "This product may have been removed."}</p>
-
           <Link to="/products">Back to products</Link>
         </div>
       </main>
@@ -187,7 +311,7 @@ export default function ProductDetails() {
   const currentImage = images[activeImage] || product.thumbnail;
 
   const increaseQuantity = () => {
-    if (quantity < product.stock) {
+    if (quantity < stock) {
       setQuantity((current) => current + 1);
     }
   };
@@ -198,27 +322,8 @@ export default function ProductDetails() {
     }
   };
 
-  const handleAddToCart = () => {
-    addToCart(product, quantity);
-
-    setAdded(true);
-    clearTimeout(addedTimer.current);
-    addedTimer.current = setTimeout(() => setAdded(false), 1800);
-  };
-
-  const handleBuyNow = () => {
-    addToCart(product, quantity);
-    navigate("/checkout");
-  };
-
-  const selectImage = (index) => {
-    setActiveImage(index);
-    setImageFailed(false);
-  };
-
   return (
     <main className="product-details-page">
-      {/* Breadcrumb */}
       <nav className="product-breadcrumb" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
         <span>/</span>
@@ -228,7 +333,7 @@ export default function ProductDetails() {
       </nav>
 
       <section className="product-details">
-        {/* Image */}
+        {/* Product images */}
         <div className="details-image-section">
           <div className="details-image-wrapper">
             {imageFailed || !currentImage ? (
@@ -252,7 +357,9 @@ export default function ProductDetails() {
                   type="button"
                   role="listitem"
                   key={src}
-                  className={`details-thumb ${index === activeImage ? "active" : ""}`}
+                  className={`details-thumb ${
+                    index === activeImage ? "active" : ""
+                  }`}
                   onClick={() => selectImage(index)}
                   aria-label={`Show image ${index + 1}`}
                   aria-current={index === activeImage}
@@ -264,7 +371,7 @@ export default function ProductDetails() {
           )}
         </div>
 
-        {/* Information */}
+        {/* Product information */}
         <div className="details-info">
           <span className="details-category">
             {String(product.category || "").replace(/-/g, " ")}
@@ -297,11 +404,15 @@ export default function ProductDetails() {
                 : `${stock} items available`}
           </div>
 
-          {/* Quantity */}
+          {/* Quantity selector */}
           <div className="quantity-section">
             <span>Quantity</span>
 
-            <div className="quantity-control" role="group" aria-label="Quantity">
+            <div
+              className="quantity-control"
+              role="group"
+              aria-label="Quantity"
+            >
               <button
                 type="button"
                 onClick={decreaseQuantity}
@@ -316,7 +427,7 @@ export default function ProductDetails() {
               <button
                 type="button"
                 onClick={increaseQuantity}
-                disabled={quantity >= product.stock}
+                disabled={quantity >= stock}
                 aria-label="Increase quantity"
               >
                 +
@@ -324,23 +435,25 @@ export default function ProductDetails() {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Cart actions */}
           <div className="details-actions">
             <button
               type="button"
               className={`add-cart-btn ${added ? "added" : ""}`}
               onClick={handleAddToCart}
-              disabled={!product.stock}
+              disabled={!inStock}
             >
               {added ? <CheckIcon /> : <CartIcon />}
-              <span aria-live="polite">{added ? "Added to cart" : "Add to cart"}</span>
+              <span aria-live="polite">
+                {added ? "Added to cart" : "Add to cart"}
+              </span>
             </button>
 
             <button
               type="button"
               className="buy-now-btn"
               onClick={handleBuyNow}
-              disabled={!product.stock}
+              disabled={!inStock}
             >
               Buy now
             </button>
@@ -349,9 +462,7 @@ export default function ProductDetails() {
           {/* Benefits */}
           <div className="product-benefits">
             <div>
-              <span>
-                <TruckIcon />
-              </span>
+              <span><TruckIcon /></span>
               <div>
                 <strong>Fast delivery</strong>
                 <small>Quick &amp; reliable shipping</small>
@@ -359,9 +470,7 @@ export default function ProductDetails() {
             </div>
 
             <div>
-              <span>
-                <ReturnIcon />
-              </span>
+              <span><ReturnIcon /></span>
               <div>
                 <strong>Easy returns</strong>
                 <small>Simple return process</small>
@@ -369,15 +478,105 @@ export default function ProductDetails() {
             </div>
 
             <div>
-              <span>
-                <ShieldIcon />
-              </span>
+              <span><ShieldIcon /></span>
               <div>
                 <strong>Secure payment</strong>
                 <small>Safe checkout experience</small>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Customer reviews */}
+      <section className="product-reviews">
+        <div className="reviews-header">
+          <div>
+            <span className="details-category">CUSTOMER FEEDBACK</span>
+            <h2>Customer Reviews</h2>
+            <p>Share your experience with this product.</p>
+          </div>
+
+          <div className="reviews-summary">
+            <strong>{reviews.length}</strong>
+            <span>{reviews.length === 1 ? "Review" : "Reviews"}</span>
+          </div>
+        </div>
+
+        <form className="review-form" onSubmit={handleReviewSubmit}>
+          <label htmlFor="review-name">Your name</label>
+          <input
+            id="review-name"
+            type="text"
+            value={reviewName}
+            onChange={(event) => setReviewName(event.target.value)}
+            placeholder="Enter your name"
+            maxLength={60}
+            required
+          />
+
+          <label htmlFor="review-rating">Your rating</label>
+          <select
+            id="review-rating"
+            value={reviewRating}
+            onChange={(event) =>
+              setReviewRating(Number(event.target.value))
+            }
+          >
+            <option value={5}>★★★★★ — Excellent</option>
+            <option value={4}>★★★★ — Very good</option>
+            <option value={3}>★★★ — Good</option>
+            <option value={2}>★★ — Fair</option>
+            <option value={1}>★ — Poor</option>
+          </select>
+
+          <label htmlFor="review-text">Your review</label>
+          <textarea
+            id="review-text"
+            value={reviewText}
+            onChange={(event) => setReviewText(event.target.value)}
+            placeholder="Write your product review"
+            rows={4}
+            maxLength={1000}
+            required
+          />
+
+          <button type="submit" className="submit-review-btn">
+            Submit review
+          </button>
+
+          {reviewMessage && (
+            <p className="review-message" role="status">
+              {reviewMessage}
+            </p>
+          )}
+        </form>
+
+        <div className="reviews-list">
+          {reviews.length === 0 ? (
+            <p className="no-reviews">
+              No reviews yet. Be the first to share your feedback!
+            </p>
+          ) : (
+            reviews.map((review) => (
+              <article className="review-card" key={review.id}>
+                <div className="review-card-header">
+                  <strong>{review.name}</strong>
+                  <time>{review.date}</time>
+                </div>
+
+                <div
+                  className="review-stars"
+                  aria-label={`${review.rating} out of 5 stars`}
+                >
+                  {"★".repeat(review.rating)}
+                  <span>{"★".repeat(5 - review.rating)}</span>
+                </div>
+
+                <p>{review.text}</p>
+              </article>
+            ))
+          )}
         </div>
       </section>
     </main>

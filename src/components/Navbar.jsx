@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "../context/CardContext.jsx";
+import { useWishlist } from "../context/WishlistContext.jsx";
 import { Link, NavLink } from "react-router-dom";
 import "../styles/navbar.css";
 
@@ -48,6 +49,8 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { cartCount } = useCart();
+  const { wishlistItems } = useWishlist();
+  const wishlistCount = wishlistItems.length;
 
   const headerRef = useRef(null);
 
@@ -164,13 +167,20 @@ export default function Navbar() {
         <div className="desktop-actions">
 
           {/* Wishlist */}
-          <button
-            type="button"
+          <Link
+            to="/wishlist"
             className="nav-icon-btn"
             aria-label="Wishlist"
           >
-            <HeartIcon />
-          </button>
+            <span className="cart-icon-wrapper">
+              <HeartIcon />
+              {wishlistCount > 0 && (
+                <span className="cart-count" aria-label={`${wishlistCount} items in wishlist`}>
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </span>
+          </Link>
 
           {/* Cart */}
           <Link
@@ -204,13 +214,21 @@ export default function Navbar() {
         <div className="mobile-actions">
 
           {/* Mobile Wishlist */}
-          <button
-            type="button"
+          <Link
+            to="/wishlist"
             className="nav-icon-btn mobile-wishlist"
             aria-label="Wishlist"
+            onClick={closeMenu}
           >
-            <HeartIcon />
-          </button>
+            <span className="cart-icon-wrapper">
+              <HeartIcon />
+              {wishlistCount > 0 && (
+                <span className="cart-count" aria-label={`${wishlistCount} items in wishlist`}>
+                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                </span>
+              )}
+            </span>
+          </Link>
 
 
           {/* Mobile Cart */}
