@@ -1,7 +1,12 @@
-#environment variables
+node_modules/
 .env
-.env.local
-.env.development.local
+.env.*
+!.env.example
+
+backend/node_modules/
+backend/.env
+backend/.env.*
+!backend/.env.example
 
 # Logs
 logs
