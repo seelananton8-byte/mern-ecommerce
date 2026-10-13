@@ -8,6 +8,7 @@ require("dotenv").config();
 
 const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 
@@ -46,6 +47,7 @@ const authLimiter = rateLimit({
 });
 
 app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 
 app.get("/api/health", (req, res) => {

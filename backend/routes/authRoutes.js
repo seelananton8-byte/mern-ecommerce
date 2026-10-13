@@ -10,20 +10,23 @@ const router = express.Router();
 // POST: Register a new user
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body || {};
 
     if (
       typeof name !== "string" ||
-      !name.trim() ||
+      name.trim().length < 2 ||
+      name.trim().length > 100 ||
       typeof email !== "string" ||
+      email.trim().length > 254 ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
       typeof password !== "string" ||
-      password.length < 8
+      password.length < 8 ||
+      password.length > 100
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Valid name, email, and password of at least 8 characters are required.",
+          "Name must be 2–100 characters, email must be valid, and password must be 8–100 characters.",
       });
     }
 
@@ -66,6 +69,13 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Registration details are invalid.",
+      });
+    }
+
     console.error("Registration error:", error.message);
 
     return res.status(500).json({
@@ -78,17 +88,19 @@ router.post("/register", async (req, res) => {
 // POST: Login
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (
       typeof email !== "string" ||
       !email.trim() ||
+      email.trim().length > 254 ||
       typeof password !== "string" ||
-      !password
+      password.length === 0 ||
+      password.length > 100
     ) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required.",
+        message: "Valid email and password are required.",
       });
     }
 
@@ -155,7 +167,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// GET: Current authenticated user (protected route)
+// GET: Current authenticated user
 router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -192,7 +204,7 @@ router.get(
   authMiddleware,
   allowRoles("admin"),
   (req, res) => {
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Admin access granted!",
     });
