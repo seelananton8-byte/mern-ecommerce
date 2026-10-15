@@ -7,6 +7,17 @@ const allowRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
+const isProd = process.env.NODE_ENV === "production";
+
+// bcrypt only uses the first 72 BYTES of a password
+const MAX_PASSWORD_BYTES = 72;
+
+// Dummy hash so login takes the same time whether the email exists or not
+// (prevents user enumeration via response timing)
+const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 12);
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // POST: Register a new user
 router.post("/register", async (req, res) => {
   try {
@@ -18,23 +29,21 @@ router.post("/register", async (req, res) => {
       name.trim().length > 100 ||
       typeof email !== "string" ||
       email.trim().length > 254 ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+      !EMAIL_REGEX.test(email.trim()) ||
       typeof password !== "string" ||
       password.length < 8 ||
-      password.length > 100
+      Buffer.byteLength(password, "utf8") > MAX_PASSWORD_BYTES
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Name must be 2–100 characters, email must be valid, and password must be 8–100 characters.",
+          "Name must be 2–100 characters, email must be valid, and password must be 8–72 characters.",
       });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const existingUser = await User.findOne({
-      email: normalizedEmail,
-    });
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json({
@@ -45,6 +54,7 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // role is NEVER taken from req.body (schema default "user" applies)
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
@@ -104,32 +114,17 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    if (!process.env.JWT_SECRET) {
-      console.error("JWT_SECRET is missing.");
-
-      return res.status(500).json({
-        success: false,
-        message: "Authentication is not configured.",
-      });
-    }
-
     const user = await User.findOne({
       email: email.trim().toLowerCase(),
     }).select("+password");
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
-    }
-
+    // Always run bcrypt.compare (constant-ish time)
     const passwordMatches = await bcrypt.compare(
       password,
-      user.password
+      user ? user.password : DUMMY_HASH
     );
 
-    if (!passwordMatches) {
+    if (!user || !passwordMatches) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password.",
@@ -142,7 +137,7 @@ router.post("/login", async (req, res) => {
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "1h", algorithm: "HS256" }
     );
 
     return res.status(200).json({
@@ -198,17 +193,19 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-// Admin-only test route
-router.get(
-  "/admin-test",
-  authMiddleware,
-  allowRoles("admin"),
-  (req, res) => {
-    return res.status(200).json({
-      success: true,
-      message: "Admin access granted!",
-    });
-  }
-);
+// Admin-only test route (disabled in production)
+if (!isProd) {
+  router.get(
+    "/admin-test",
+    authMiddleware,
+    allowRoles("admin"),
+    (req, res) => {
+      return res.status(200).json({
+        success: true,
+        message: "Admin access granted!",
+      });
+    }
+  );
+}
 
 module.exports = router;

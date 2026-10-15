@@ -1410,3 +1410,81 @@
 .mobile-menu nav {
   overflow-x: hidden;
 }
+
+
+/* =========================================
+   MOBILE LOGOUT — MATCH ACCOUNT PAGE
+   Only affects the Logout button
+========================================= */
+
+.mobile-menu nav button.mobile-login {
+  appearance: none;
+  -webkit-appearance: none;
+
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+
+  color: #dc2626;
+
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.mobile-menu nav button.mobile-login:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #dc2626;
+  box-shadow: none;
+}
+
+.mobile-menu nav button.mobile-login:active {
+  background: #fef2f2;
+  transform: scale(0.99);
+}
+
+.mobile-menu nav button.mobile-login:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 3px;
+}
+
+/* Preserve normal appearance on touch devices */
+@media (hover: none) {
+  .mobile-menu nav button.mobile-login:hover {
+    background: #ffffff;
+    border-color: #fecaca;
+    color: #dc2626;
+  }
+}
+
+
+/* =========================================
+   DESKTOP LOGOUT — MATCH ACCOUNT PAGE
+   Only affects the desktop Logout button
+========================================= */
+
+.desktop-actions > button.login-btn {
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  box-shadow: none;
+}
+
+.desktop-actions > button.login-btn:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+  color: #dc2626;
+  filter: none;
+  box-shadow: none;
+  transform: translateY(-1px);
+}
+
+.desktop-actions > button.login-btn:active {
+  background: #fef2f2;
+  transform: scale(0.97);
+}

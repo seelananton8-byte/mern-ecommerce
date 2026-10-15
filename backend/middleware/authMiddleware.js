@@ -12,7 +12,14 @@ async function authMiddleware(req, res, next) {
       });
     }
 
-    const token = authHeader.slice(7);
+    const token = authHeader.slice(7).trim();
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication token is required.",
+      });
+    }
 
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET is missing.");
@@ -23,17 +30,25 @@ async function authMiddleware(req, res, next) {
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    });
 
-    if (!decoded.userId) {
+    // userId must be a string in valid MongoDB ObjectId format
+    if (
+      typeof decoded.userId !== "string" ||
+      !/^[a-fA-F0-9]{24}$/.test(decoded.userId)
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid authentication token.",
       });
     }
 
-    // Verify that the user still exists and get their current database role.
-    const user = await User.findById(decoded.userId).select("_id role");
+    // Confirm the user still exists and use the CURRENT role from the database.
+    const user = await User.findById(decoded.userId)
+      .select("_id role")
+      .lean();
 
     if (!user) {
       return res.status(401).json({
@@ -49,8 +64,11 @@ async function authMiddleware(req, res, next) {
 
     return next();
   } catch (error) {
-    if (error.name === "TokenExpiredError" ||
-        error.name === "JsonWebTokenError") {
+    if (
+      error.name === "TokenExpiredError" ||
+      error.name === "JsonWebTokenError" ||
+      error.name === "NotBeforeError"
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid or expired authentication token.",

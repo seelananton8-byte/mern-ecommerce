@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+const MAX_ITEMS_PER_ORDER = 50;
+const MAX_QUANTITY_PER_ITEM = 100;
+
+// Round to 2 decimals on assignment (avoids 59.970000000000006)
+const round2 = (value) =>
+  typeof value === "number" ? Math.round(value * 100) / 100 : value;
+
 const orderItemSchema = new mongoose.Schema(
   {
     product: {
@@ -17,11 +24,13 @@ const orderItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      set: round2,
     },
     quantity: {
       type: Number,
       required: true,
       min: 1,
+      max: MAX_QUANTITY_PER_ITEM,
       validate: {
         validator: Number.isInteger,
         message: "Quantity must be a whole number.",
@@ -44,15 +53,20 @@ const orderSchema = new mongoose.Schema(
       required: true,
       validate: {
         validator(items) {
-          return Array.isArray(items) && items.length > 0;
+          return (
+            Array.isArray(items) &&
+            items.length > 0 &&
+            items.length <= MAX_ITEMS_PER_ORDER
+          );
         },
-        message: "An order must contain at least one item.",
+        message: `An order must contain 1–${MAX_ITEMS_PER_ORDER} items.`,
       },
     },
     totalAmount: {
       type: Number,
       required: true,
       min: 0,
+      set: round2,
     },
     status: {
       type: String,
@@ -76,6 +90,29 @@ const orderSchema = new mongoose.Schema(
       enum: ["stripe", "cash_on_delivery"],
       default: "cash_on_delivery",
     },
+
+    // Stripe linkage (set by the server / webhook only, never from req.body)
+    stripeSessionId: {
+      type: String,
+      trim: true,
+      maxlength: 255,
+    },
+    paymentIntentId: {
+      type: String,
+      trim: true,
+      maxlength: 255,
+    },
+    paidAt: {
+      type: Date,
+    },
+
+    // Client-generated key (e.g. UUID) to stop duplicate orders on double click / retry
+    idempotencyKey: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+    },
+
     shippingAddress: {
       fullName: {
         type: String,
@@ -107,5 +144,25 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ status: 1, createdAt: -1 });
+
+// One order per (user, idempotencyKey)
+orderSchema.index(
+  { user: 1, idempotencyKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { idempotencyKey: { $type: "string" } },
+  }
+);
+
+// A Stripe session / payment intent can belong to only one order
+orderSchema.index(
+  { stripeSessionId: 1 },
+  { unique: true, partialFilterExpression: { stripeSessionId: { $type: "string" } } }
+);
+orderSchema.index(
+  { paymentIntentId: 1 },
+  { unique: true, partialFilterExpression: { paymentIntentId: { $type: "string" } } }
+);
 
 module.exports = mongoose.model("Order", orderSchema);

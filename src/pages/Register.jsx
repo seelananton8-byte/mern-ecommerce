@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 
 /* ---------- Inline SVG icons ---------- */
@@ -61,9 +61,109 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function Register() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setError("");
+    setSuccess("");
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (trimmedName.length < 2) {
+      setError("Please enter your full name (at least 2 characters).");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters.");
+      return;
+    }
+
+    if (new TextEncoder().encode(password).length > 72) {
+      setError("Password is too long. Please use a shorter password.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError("Please agree to the Terms & Conditions.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: trimmedName,
+          email: trimmedEmail,
+          password,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+            (response.status === 409
+              ? "An account with this email already exists."
+              : "Registration failed. Please try again.")
+        );
+      }
+
+      setSuccess("Account created successfully! Redirecting to sign in...");
+
+      // Registration does not automatically log the user in.
+      // Sign in using the newly created account.
+      window.setTimeout(() => {
+        navigate("/login", {
+          replace: true,
+          state: { registeredEmail: trimmedEmail },
+        });
+      }, 1000);
+    } catch (err) {
+      setError(
+        err.message ||
+          "Unable to connect to the server. Check whether the backend is running."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = () => {
+    setError("Google sign-up is not configured yet.");
+    setSuccess("");
+  };
 
   return (
     <main className="auth-page">
@@ -75,33 +175,36 @@ export default function Register() {
 
         <div className="auth-heading">
           <h1>Join ShopSphere</h1>
-
           <p>Create your account and start shopping today.</p>
         </div>
 
-        <form className="auth-form">
+        <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-group">
             <label htmlFor="name">Full name</label>
-
             <input
               id="name"
               name="name"
               type="text"
               placeholder="Enter your full name"
               autoComplete="name"
+              minLength={2}
+              maxLength={100}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
               required
             />
           </div>
 
           <div className="auth-group">
             <label htmlFor="register-email">Email address</label>
-
             <input
               id="register-email"
               name="email"
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               required
             />
           </div>
@@ -116,6 +219,9 @@ export default function Register() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Create a password"
                 autoComplete="new-password"
+                minLength={8}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
 
@@ -140,12 +246,17 @@ export default function Register() {
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm your password"
                 autoComplete="new-password"
+                minLength={8}
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 required
               />
 
               <button
                 type="button"
-                onClick={() => setShowConfirmPassword((show) => !show)}
+                onClick={() =>
+                  setShowConfirmPassword((show) => !show)
+                }
                 aria-label={
                   showConfirmPassword
                     ? "Hide confirm password"
@@ -158,13 +269,34 @@ export default function Register() {
             </div>
           </div>
 
+          {error && (
+            <p className="auth-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          {success && (
+            <p className="auth-success" role="status">
+              {success}
+            </p>
+          )}
+
           <label className="remember-row">
-            <input type="checkbox" required />
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              required
+            />
             <span>I agree to the Terms &amp; Conditions</span>
           </label>
 
-          <button type="submit" className="auth-submit">
-            Create account
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={loading}
+          >
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
@@ -172,7 +304,11 @@ export default function Register() {
           <span>or</span>
         </div>
 
-        <button type="button" className="google-btn">
+        <button
+          type="button"
+          className="google-btn"
+          onClick={handleGoogleSignup}
+        >
           <GoogleIcon />
           Continue with Google
         </button>

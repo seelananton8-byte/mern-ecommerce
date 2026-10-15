@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
       minlength: 2,
       maxlength: 100,
     },
+
     email: {
       type: String,
       required: true,
@@ -18,6 +19,7 @@ const userSchema = new mongoose.Schema(
       maxlength: 254,
       match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
+
     password: {
       type: String,
       required: true,
@@ -25,6 +27,16 @@ const userSchema = new mongoose.Schema(
       maxlength: 100,
       select: false,
     },
+
+    // Set only for accounts authenticated through Google.
+    // Existing email/password users remain unchanged.
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      select: false,
+    },
+
     role: {
       type: String,
       enum: ["user", "admin"],

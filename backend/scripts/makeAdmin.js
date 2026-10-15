@@ -1,32 +1,91 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 
-async function makeAdmin() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    const email = "demo.user101@example.com";
+async function main() {
+  const args = process.argv.slice(2);
+  const email = (args.find((a) => !a.startsWith("--")) || "")
+    .trim()
+    .toLowerCase();
+  const revoke = args.includes("--revoke");
+  const create = args.includes("--create");
+  const confirm = args.includes("--confirm");
 
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    });
+  if (!email || email.length > 254 || !EMAIL_REGEX.test(email)) {
+    throw new Error("Usage: node scripts/makeAdmin.js <email> [--revoke | --create] [--confirm]");
+  }
 
-    if (!user) {
-      console.log("User not found. Register this user first.");
-      return;
+  if (revoke && create) {
+    throw new Error("Use either --revoke or --create, not both.");
+  }
+
+  if (process.env.NODE_ENV === "production" && !confirm) {
+    throw new Error("Running in production. Add --confirm to proceed.");
+  }
+
+  if (!process.env.MONGODB_URI) {
+    throw new Error("MONGODB_URI is missing in .env");
+  }
+
+  await mongoose.connect(process.env.MONGODB_URI);
+
+  const user = await User.findOne({ email }).select("_id email role");
+
+  if (!user) {
+    if (!create) {
+      throw new Error(
+        "User not found. Register first, or add --create with ADMIN_PASSWORD set."
+      );
     }
 
-    user.role = "admin";
-    await user.save();
+    const password = process.env.ADMIN_PASSWORD;
 
-    console.log("Admin role assigned successfully!");
-    console.log("Email:", user.email);
-  } catch (error) {
-    console.error("Error:", error.message);
-  } finally {
-    await mongoose.disconnect();
+    if (
+      typeof password !== "string" ||
+      password.length < 12 ||
+      Buffer.byteLength(password, "utf8") > 72
+    ) {
+      throw new Error(
+        "Set ADMIN_PASSWORD (12–72 characters) in the environment to create an admin."
+      );
+    }
+
+    const name = (process.env.ADMIN_NAME || "Admin").trim().slice(0, 100);
+
+    await User.create({
+      name: name.length >= 2 ? name : "Admin",
+      email,
+      password: await bcrypt.hash(password, 12),
+      role: "admin",
+    });
+
+    console.log(`New admin created: ${email}`);
+    return;
   }
+
+  if (create) {
+    throw new Error("User already exists. Run without --create to promote it.");
+  }
+
+  const newRole = revoke ? "user" : "admin";
+
+  if (user.role === newRole) {
+    console.log(`${email} already has role "${newRole}". Nothing changed.`);
+    return;
+  }
+
+  await User.updateOne({ _id: user._id }, { role: newRole });
+  console.log(`${email} role changed: ${user.role} -> ${newRole}`);
 }
 
-makeAdmin();
+main()
+  .catch((error) => {
+    console.error("Error:", error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await mongoose.disconnect();
+  });

@@ -1,5 +1,8 @@
 const mongoose = require("mongoose");
 
+const MAX_PRICE = 10000000; // 1 crore
+const MAX_STOCK = 1000000;
+
 const productSchema = new mongoose.Schema(
   {
     title: {
@@ -19,9 +22,17 @@ const productSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      max: MAX_PRICE,
       validate: {
-        validator: Number.isFinite,
-        message: "Price must be a valid number.",
+        // finite number with at most 2 decimal places (needed for safe
+        // conversion to the smallest currency unit for Stripe)
+        validator(value) {
+          return (
+            Number.isFinite(value) &&
+            Math.round(value * 100) / 100 === value
+          );
+        },
+        message: "Price must be a valid number with at most 2 decimal places.",
       },
     },
     category: {
@@ -56,6 +67,7 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+      max: MAX_STOCK,
       validate: {
         validator(value) {
           return Number.isInteger(value);
@@ -66,5 +78,10 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexes for faster listing / filtering / search
+productSchema.index({ category: 1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ title: "text", description: "text" });
 
 module.exports = mongoose.model("Product", productSchema);

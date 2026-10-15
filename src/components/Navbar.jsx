@@ -1,7 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { useCart } from "../context/CardContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
-import { Link, NavLink } from "react-router-dom";
 import "../styles/navbar.css";
 
 /* ---------- Inline SVG icons ---------- */
@@ -20,7 +26,6 @@ const CartIcon = () => (
   >
     <circle cx="9" cy="20" r="1.4" />
     <circle cx="18" cy="20" r="1.4" />
-
     <path d="M2.5 3h2.7l2.4 11.2a1.6 1.6 0 0 0 1.6 1.3h8.1a1.6 1.6 0 0 0 1.6-1.2L20.5 7H6" />
   </svg>
 );
@@ -41,71 +46,148 @@ const HeartIcon = () => (
   </svg>
 );
 
-/* Categories shares the /products route with Shop.
-   Returning an empty className stops both links from highlighting together. */
+/* Categories and Shop share the same route. */
 const noActive = () => "";
+
+const getStoredAuth = () => {
+  try {
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
+
+    const storedUser =
+      localStorage.getItem("user") ||
+      sessionStorage.getItem("user");
+
+    if (!token || !storedUser) {
+      return null;
+    }
+
+    const user = JSON.parse(storedUser);
+
+    if (!user || typeof user !== "object") {
+      return null;
+    }
+
+    return { token, user };
+  } catch {
+    return null;
+  }
+};
+
+const getFirstName = (name) => {
+  if (typeof name !== "string" || !name.trim()) {
+    return "Account";
+  }
+
+  return name.trim().split(/\s+/)[0];
+};
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const { cartCount } = useCart();
-  const { wishlistItems } = useWishlist();
-  const wishlistCount = wishlistItems.length;
+  const [auth, setAuth] = useState(getStoredAuth);
 
   const headerRef = useRef(null);
 
-  /* ---------- Close mobile menu ---------- */
-  const closeMenu = () => {
-    setMenuOpen(false);
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  /* ---------- Mobile menu behavior ---------- */
+  const { cartCount } = useCart();
+  const { wishlistItems } = useWishlist();
+
+  const wishlistCount = wishlistItems.length;
+  const isLoggedIn = Boolean(auth?.token && auth?.user);
+  const user = auth?.user;
+
+  const accountPath = isLoggedIn ? "/account" : "/login";
+
+  /* ---------- Synchronize authentication ---------- */
+
+  const syncAuth = useCallback(() => {
+    setAuth(getStoredAuth());
+  }, []);
+
+  useEffect(() => {
+    syncAuth();
+  }, [location.pathname, syncAuth]);
+
+  useEffect(() => {
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("authchange", syncAuth);
+    window.addEventListener("focus", syncAuth);
+
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("authchange", syncAuth);
+      window.removeEventListener("focus", syncAuth);
+    };
+  }, [syncAuth]);
+
+  /* ---------- Close mobile menu ---------- */
+
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+  }, []);
+
   useEffect(() => {
     if (!menuOpen) return undefined;
 
-    /* Escape key */
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        setMenuOpen(false);
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeMenu();
       }
     };
 
-    /* Click outside navbar */
-    const onPointer = (e) => {
+    const handleOutsideClick = (event) => {
       if (
         headerRef.current &&
-        !headerRef.current.contains(e.target)
+        !headerRef.current.contains(event.target)
       ) {
-        setMenuOpen(false);
+        closeMenu();
       }
     };
 
-    /* Close menu when switching to desktop */
-    const onResize = () => {
+    const handleResize = () => {
       if (window.innerWidth > 768) {
-        setMenuOpen(false);
+        closeMenu();
       }
     };
 
-    /* Prevent body scrolling while menu is open */
     const previousOverflow = document.body.style.overflow;
-
     document.body.style.overflow = "hidden";
 
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onPointer);
-    window.addEventListener("resize", onResize);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("pointerdown", handleOutsideClick);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       document.body.style.overflow = previousOverflow;
 
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onPointer);
-      window.removeEventListener("resize", onResize);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("pointerdown", handleOutsideClick);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [menuOpen]);
+  }, [menuOpen, closeMenu]);
+
+  /* ---------- Logout ---------- */
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+
+    setAuth(null);
+    closeMenu();
+
+    window.dispatchEvent(new Event("authchange"));
+
+    navigate("/", { replace: true });
+  };
 
   /* ---------- Cart badge ---------- */
+
   const cartBadge =
     cartCount > 0 ? (
       <span
@@ -116,31 +198,31 @@ export default function Navbar() {
       </span>
     ) : null;
 
+  /* ---------- Wishlist badge ---------- */
+
+  const wishlistBadge =
+    wishlistCount > 0 ? (
+      <span
+        className="cart-count"
+        aria-label={`${wishlistCount} items in wishlist`}
+      >
+        {wishlistCount > 99 ? "99+" : wishlistCount}
+      </span>
+    ) : null;
+
   return (
     <header className="navbar" ref={headerRef}>
       <div className="navbar-inner">
+        {/* LOGO */}
 
-        {/* ================= LOGO ================= */}
-
-        <Link
-          to="/"
-          className="logo"
-          onClick={closeMenu}
-        >
+        <Link to="/" className="logo" onClick={closeMenu}>
           <span className="logo-mark">S</span>
-
-          <span className="logo-text">
-            ShopSphere
-          </span>
+          <span className="logo-text">ShopSphere</span>
         </Link>
 
+        {/* DESKTOP NAVIGATION */}
 
-        {/* ================= DESKTOP NAVIGATION ================= */}
-
-        <nav
-          className="desktop-nav"
-          aria-label="Main"
-        >
+        <nav className="desktop-nav" aria-label="Main navigation">
           <NavLink to="/" end>
             Home
           </NavLink>
@@ -149,71 +231,65 @@ export default function Navbar() {
             Shop
           </NavLink>
 
-          <NavLink
-            to="/products"
-            className={noActive}
-          >
+          <NavLink to="/products" className={noActive}>
             Categories
           </NavLink>
 
-          <NavLink to="/login">
+          <NavLink to={accountPath}>
             Account
           </NavLink>
         </nav>
 
-
-        {/* ================= DESKTOP ACTIONS ================= */}
+        {/* DESKTOP ACTIONS */}
 
         <div className="desktop-actions">
-
-          {/* Wishlist */}
           <Link
             to="/wishlist"
             className="nav-icon-btn"
-            aria-label="Wishlist"
+            aria-label={`Wishlist${wishlistCount ? `, ${wishlistCount} items` : ""}`}
           >
             <span className="cart-icon-wrapper">
               <HeartIcon />
-              {wishlistCount > 0 && (
-                <span className="cart-count" aria-label={`${wishlistCount} items in wishlist`}>
-                  {wishlistCount > 99 ? "99+" : wishlistCount}
-                </span>
-              )}
+              {wishlistBadge}
             </span>
           </Link>
 
-          {/* Cart */}
-          <Link
-            to="/cart"
-            className="cart-btn"
-            aria-label="Cart"
-          >
+          <Link to="/cart" className="cart-btn" aria-label="Cart">
             <span className="cart-icon-wrapper">
               <CartIcon />
               {cartBadge}
             </span>
-
-            <span>
-              Cart
-            </span>
+            <span>Cart</span>
           </Link>
 
-          {/* Login */}
-          <Link
-            to="/login"
-            className="login-btn"
-          >
-            Login
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link
+                to="/account"
+                className="login-btn"
+                title={user.name || user.email}
+              >
+                {getFirstName(user.name)}
+              </Link>
 
+              <button
+                type="button"
+                className="login-btn"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="login-btn">
+              Login
+            </Link>
+          )}
         </div>
 
-
-        {/* ================= MOBILE ACTIONS ================= */}
+        {/* MOBILE ACTIONS */}
 
         <div className="mobile-actions">
-
-          {/* Mobile Wishlist */}
           <Link
             to="/wishlist"
             className="nav-icon-btn mobile-wishlist"
@@ -222,16 +298,10 @@ export default function Navbar() {
           >
             <span className="cart-icon-wrapper">
               <HeartIcon />
-              {wishlistCount > 0 && (
-                <span className="cart-count" aria-label={`${wishlistCount} items in wishlist`}>
-                  {wishlistCount > 99 ? "99+" : wishlistCount}
-                </span>
-              )}
+              {wishlistBadge}
             </span>
           </Link>
 
-
-          {/* Mobile Cart */}
           <Link
             to="/cart"
             className="mobile-cart"
@@ -244,60 +314,37 @@ export default function Navbar() {
             </span>
           </Link>
 
-
-          {/* Hamburger */}
           <button
             type="button"
-            className={`menu-btn ${
-              menuOpen ? "open" : ""
-            }`}
-            onClick={() =>
-              setMenuOpen((open) => !open)
-            }
-            aria-label="Toggle navigation menu"
+            className={`menu-btn ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <span />
+            <span />
+            <span />
           </button>
-
         </div>
-
       </div>
 
-
-      {/* ================= MOBILE MENU ================= */}
+      {/* MOBILE MENU */}
 
       <div
         id="mobile-menu"
-        className={`mobile-menu ${
-          menuOpen ? "show" : ""
-        }`}
+        className={`mobile-menu ${menuOpen ? "show" : ""}`}
+        aria-hidden={!menuOpen}
       >
-        <nav aria-label="Mobile">
-
-          {/* Home */}
-          <NavLink
-            to="/"
-            end
-            onClick={closeMenu}
-          >
+        <nav aria-label="Mobile navigation">
+          <NavLink to="/" end onClick={closeMenu}>
             Home
           </NavLink>
 
-
-          {/* Shop */}
-          <NavLink
-            to="/products"
-            onClick={closeMenu}
-          >
+          <NavLink to="/products" onClick={closeMenu}>
             Shop
           </NavLink>
 
-
-          {/* Categories */}
           <NavLink
             to="/products"
             className={noActive}
@@ -306,28 +353,39 @@ export default function Navbar() {
             Categories
           </NavLink>
 
-
-          {/* Account */}
-          <NavLink
-            to="/login"
-            onClick={closeMenu}
-          >
+          <NavLink to={accountPath} onClick={closeMenu}>
             Account
           </NavLink>
 
+          {isLoggedIn ? (
+            <>
+              <Link
+                to="/account"
+                className="mobile-login"
+                onClick={closeMenu}
+              >
+                My account ({getFirstName(user.name)})
+              </Link>
 
-          {/* Login */}
-          <Link
-            to="/login"
-            className="mobile-login"
-            onClick={closeMenu}
-          >
-            Login
-          </Link>
-
+              <button
+                type="button"
+                className="mobile-login"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/login"
+              className="mobile-login"
+              onClick={closeMenu}
+            >
+              Login
+            </Link>
+          )}
         </nav>
       </div>
-
     </header>
   );
 }

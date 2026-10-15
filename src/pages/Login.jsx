@@ -1,8 +1,10 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/auth.css";
 
-/* ---------- Inline SVG icons ---------- */
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const EyeIcon = () => (
   <svg
@@ -62,7 +64,73 @@ const GoogleIcon = () => (
 );
 
 export default function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (loading) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success || !data.token || !data.user) {
+        throw new Error(data.message || "Unable to sign in. Please try again.");
+      }
+
+      // Remember-me controls whether the session survives closing the tab.
+      const storage = rememberMe ? localStorage : sessionStorage;
+
+      // Clear stale credentials from the other storage.
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+
+      storage.setItem("token", data.token);
+      storage.setItem("user", JSON.stringify(data.user));
+
+      const requestedPath = location.state?.from;
+      const destination =
+        typeof requestedPath === "string" &&
+        requestedPath.startsWith("/") &&
+        !requestedPath.startsWith("//")
+          ? requestedPath
+          : "/";
+
+      navigate(destination, { replace: true });
+    } catch (err) {
+      setError(
+        err instanceof TypeError
+          ? "Cannot connect to the server. Make sure the backend is running."
+          : err.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="auth-page">
@@ -77,7 +145,24 @@ export default function Login() {
           <p>Access your account and continue shopping.</p>
         </div>
 
-        <form className="auth-form">
+        <form className="auth-form" onSubmit={handleSubmit}>
+          {error && (
+            <div
+              role="alert"
+              aria-live="polite"
+              style={{
+                padding: "12px 14px",
+                marginBottom: "16px",
+                borderRadius: "8px",
+                background: "#fef2f2",
+                color: "#b91c1c",
+                fontSize: "14px",
+              }}
+            >
+              {error}
+            </div>
+          )}
+
           <div className="auth-group">
             <label htmlFor="email">Email address</label>
             <input
@@ -86,6 +171,9 @@ export default function Login() {
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              maxLength={254}
               required
             />
           </div>
@@ -93,8 +181,16 @@ export default function Login() {
           <div className="auth-group">
             <div className="password-label">
               <label htmlFor="password">Password</label>
-
-              <button type="button">Forgot password?</button>
+              <button
+                type="button"
+                onClick={() =>
+                  setError(
+                    "Password reset is not configured yet. Please contact the administrator."
+                  )
+                }
+              >
+                Forgot password?
+              </button>
             </div>
 
             <div className="password-input">
@@ -104,6 +200,8 @@ export default function Login() {
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
 
@@ -119,12 +217,20 @@ export default function Login() {
           </div>
 
           <label className="remember-row">
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+            />
             <span>Remember me</span>
           </label>
 
-          <button type="submit" className="auth-submit">
-            Sign in
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={loading}
+          >
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
@@ -132,7 +238,13 @@ export default function Login() {
           <span>or</span>
         </div>
 
-        <button type="button" className="google-btn">
+        <button
+          type="button"
+          className="google-btn"
+          onClick={() =>
+            setError("Google sign-in is not configured yet.")
+          }
+        >
           <GoogleIcon />
           Continue with Google
         </button>
