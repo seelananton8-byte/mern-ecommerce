@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import "../styles/auth.css";
 
-/* ---------- Inline SVG icons ---------- */
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const EyeIcon = () => (
   <svg
@@ -40,30 +42,6 @@ const EyeOffIcon = () => (
   </svg>
 );
 
-const GoogleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      fill="#4285F4"
-      d="M22.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.4-4.7 3.4-7.8z"
-    />
-    <path
-      fill="#34A853"
-      d="M12 23c3 0 5.4-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.8 0-5.2-1.9-6-4.5H2.4v2.8A11 11 0 0 0 12 23z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M6 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.4a11 11 0 0 0 0 9.8L6 14.1z"
-    />
-    <path
-      fill="#EA4335"
-      d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.4 7.1L6 9.9c.8-2.6 3.2-4.5 6-4.5z"
-    />
-  </svg>
-);
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
 export default function Register() {
   const navigate = useNavigate();
 
@@ -77,11 +55,32 @@ export default function Register() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const saveGoogleLogin = (data) => {
+    if (!data?.success || !data?.token || !data?.user) {
+      throw new Error("Google sign-up response is incomplete.");
+    }
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+
+    sessionStorage.setItem("token", data.token);
+    sessionStorage.setItem("user", JSON.stringify(data.user));
+
+    window.dispatchEvent(new Event("authchange"));
+
+    navigate("/", { replace: true });
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (loading || googleLoading) return;
 
     setError("");
     setSuccess("");
@@ -142,8 +141,6 @@ export default function Register() {
 
       setSuccess("Account created successfully! Redirecting to sign in...");
 
-      // Registration does not automatically log the user in.
-      // Sign in using the newly created account.
       window.setTimeout(() => {
         navigate("/login", {
           replace: true,
@@ -152,17 +149,59 @@ export default function Register() {
       }, 1000);
     } catch (err) {
       setError(
-        err.message ||
-          "Unable to connect to the server. Check whether the backend is running."
+        err instanceof TypeError
+          ? "Cannot connect to the server. Check whether the backend is running."
+          : err.message ||
+              "Unable to connect to the server. Check whether the backend is running."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignup = () => {
-    setError("Google sign-up is not configured yet.");
+  const handleGoogleSuccess = async (googleResponse) => {
+    if (loading || googleLoading) return;
+
+    setError("");
     setSuccess("");
+
+    if (!googleResponse?.credential) {
+      setError("Google did not return a valid credential. Please try again.");
+      return;
+    }
+
+    try {
+      setGoogleLoading(true);
+
+      const response = await fetch(`${API_URL}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          credential: googleResponse.credential,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Google sign-up failed. Please try again."
+        );
+      }
+
+      saveGoogleLogin(data);
+    } catch (err) {
+      setError(
+        err instanceof TypeError
+          ? "Cannot connect to the server. Check whether the backend is running."
+          : err.message ||
+              "Unable to connect to the server. Check whether the backend is running."
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -254,9 +293,7 @@ export default function Register() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowConfirmPassword((show) => !show)
-                }
+                onClick={() => setShowConfirmPassword((show) => !show)}
                 aria-label={
                   showConfirmPassword
                     ? "Hide confirm password"
@@ -294,7 +331,7 @@ export default function Register() {
           <button
             type="submit"
             className="auth-submit"
-            disabled={loading}
+            disabled={loading || googleLoading}
           >
             {loading ? "Creating account..." : "Create account"}
           </button>
@@ -304,14 +341,14 @@ export default function Register() {
           <span>or</span>
         </div>
 
-        <button
-          type="button"
-          className="google-btn"
-          onClick={handleGoogleSignup}
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
+        <GoogleAuthButton
+          loading={googleLoading}
+          loadingText="Signing up with Google..."
+          onSuccess={handleGoogleSuccess}
+          onError={() =>
+            setError("Google sign-up failed. Please try again.")
+          }
+        />
 
         <p className="auth-switch">
           Already have an account?

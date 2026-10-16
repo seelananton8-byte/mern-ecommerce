@@ -116,7 +116,10 @@ async function cancelOrderAndRestoreStock({ orderId, userId, allowedStatuses }) 
 
       const order = await Order.findOneAndUpdate(
         filter,
-        { $set: { status: "cancelled" } },
+        {
+          $set: { status: "cancelled" },
+          $push: { statusHistory: { status: "cancelled" } },
+        },
         { new: true, session }
       );
 
@@ -278,10 +281,15 @@ router.post("/", authMiddleware, createOrderLimiter, async (req, res) => {
             addressLine: shippingAddress.addressLine.trim(),
             city: shippingAddress.city.trim(),
             postalCode: shippingAddress.postalCode.trim(),
+            phone:
+              typeof shippingAddress.phone === "string"
+                ? shippingAddress.phone.trim().slice(0, 20)
+                : undefined,
           },
           paymentProvider: paymentProvider || "cash_on_delivery",
           paymentStatus: "pending",
           status: "pending",
+          statusHistory: [{ status: "pending" }],
         };
 
         if (idempotencyKey) orderData.idempotencyKey = idempotencyKey;
@@ -598,7 +606,7 @@ router.patch("/:id/status", authMiddleware, allowRoles("admin"), async (req, res
         status: current.status, // guards against a parallel change
         paymentStatus: current.paymentStatus,
       },
-      { $set: update },
+      { $set: update, $push: { statusHistory: { status } } },
       { new: true }
     ).select(SAFE_SELECT);
 

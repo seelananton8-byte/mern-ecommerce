@@ -1,15 +1,40 @@
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { getSessionStatus, shortId } from "../services/orderService";
 import "../styles/order-success.css";
 
 const formatPrice = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
+const label = (value) => (value ? String(value).replace(/_/g, " ") : "-");
 
 export default function OrderSuccess() {
   const location = useLocation();
+  const [params] = useSearchParams();
+  const sessionId = params.get("session_id");
 
-  /* Optional: Checkout can send { order } through navigate state.
-     If it is missing (direct visit), the page still works normally. */
+  /* The order comes from Checkout / DemoPayment through navigate state.
+     After a real Stripe redirect only ?session_id=... is available. */
   const order = location.state?.order;
-  const firstName = order?.name ? String(order.name).trim().split(" ")[0] : "";
+  const [stripeInfo, setStripeInfo] = useState(null);
+
+  useEffect(() => {
+    if (order || !sessionId) return;
+
+    getSessionStatus(sessionId)
+      .then(setStripeInfo)
+      .catch(() => setStripeInfo(null));
+  }, [order, sessionId]);
+
+  const firstName = order?.shippingAddress?.fullName
+    ? String(order.shippingAddress.fullName).trim().split(" ")[0]
+    : "";
+
+  const itemCount = order?.items
+    ? order.items.reduce((total, item) => total + item.quantity, 0)
+    : 0;
+
+  const orderStatus = order?.status || stripeInfo?.orderStatus || "confirmed";
+  const paymentStatus = order?.paymentStatus || stripeInfo?.paymentStatus || "pending";
+  const delivery = ["shipped", "delivered"].includes(orderStatus) ? orderStatus : "processing";
 
   return (
     <main className="order-success-page">
@@ -41,53 +66,49 @@ export default function OrderSuccess() {
 
         {order && (
           <div className="success-order">
-            {order.id && (
-              <div>
-                <span>Order number</span>
-                <strong>{order.id}</strong>
-              </div>
-            )}
+            <div>
+              <span>Order number</span>
+              <strong>{shortId(order._id)}</strong>
+            </div>
 
-            {order.itemCount > 0 && (
+            {itemCount > 0 && (
               <div>
                 <span>Items</span>
-                <strong>{order.itemCount}</strong>
+                <strong>{itemCount}</strong>
               </div>
             )}
 
-            {order.total !== undefined && (
-              <div>
-                <span>Total</span>
-                <strong>{formatPrice(order.total)}</strong>
-              </div>
-            )}
+            <div>
+              <span>Total</span>
+              <strong>{formatPrice(order.totalAmount)}</strong>
+            </div>
           </div>
         )}
 
         <div className="success-info">
           <div>
             <span>Order status</span>
-            <strong>Confirmed</strong>
+            <strong>{label(orderStatus)}</strong>
           </div>
 
           <div>
             <span>Payment</span>
-            <strong>Pending</strong>
+            <strong>{label(paymentStatus)}</strong>
           </div>
 
           <div>
             <span>Delivery</span>
-            <strong>Processing</strong>
+            <strong>{label(delivery)}</strong>
           </div>
         </div>
 
         <div className="success-actions">
-          <Link to="/products" className="success-primary-btn">
-            Continue shopping
+          <Link to="/orders" className="success-primary-btn">
+            Track my orders
           </Link>
 
-          <Link to="/" className="success-secondary-btn">
-            Back to home
+          <Link to="/products" className="success-secondary-btn">
+            Continue shopping
           </Link>
         </div>
       </section>

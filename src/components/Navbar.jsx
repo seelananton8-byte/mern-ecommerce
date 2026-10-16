@@ -238,6 +238,12 @@ export default function Navbar() {
           <NavLink to={accountPath}>
             Account
           </NavLink>
+
+          {isLoggedIn && <NavLink to="/orders">My Orders</NavLink>}
+
+          {isLoggedIn && user?.role === "admin" && (
+            <NavLink to="/admin">Dashboard</NavLink>
+          )}
         </nav>
 
         {/* DESKTOP ACTIONS */}
@@ -356,6 +362,18 @@ export default function Navbar() {
           <NavLink to={accountPath} onClick={closeMenu}>
             Account
           </NavLink>
+
+          {isLoggedIn && (
+            <NavLink to="/orders" onClick={closeMenu}>
+              My Orders
+            </NavLink>
+          )}
+
+          {isLoggedIn && user?.role === "admin" && (
+            <NavLink to="/admin" onClick={closeMenu}>
+              Dashboard
+            </NavLink>
+          )}
 
           {isLoggedIn ? (
             <>

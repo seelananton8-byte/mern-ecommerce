@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import useAuthSync from "./hooks/useAuthSync";
 
 import Home from "./pages/Home";
 import Products from "./pages/Products";
@@ -12,6 +13,9 @@ import Register from "./pages/Register";
 import OrderSuccess from "./pages/OrderSuccess";
 import Wishlist from "./pages/Wishlist";
 import Account from "./pages/Account";
+import MyOrders from "./pages/MyOrders";
+import DemoPayment from "./pages/DemoPayment";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -23,10 +27,16 @@ function ScrollToTop() {
   return null;
 }
 
+function AuthSync() {
+  useAuthSync();
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <AuthSync />
       <Navbar />
 
       <main>
@@ -41,6 +51,9 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<Account />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/orders" element={<MyOrders />} />
+          <Route path="/demo-payment" element={<DemoPayment />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </main>
     </BrowserRouter>

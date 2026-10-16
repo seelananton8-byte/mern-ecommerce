@@ -1,0 +1,150 @@
+/* Styles for the new pages only: Admin Dashboard, My Orders, Demo Payment,
+   and the payment-method picker on Checkout. Existing CSS files are untouched. */
+
+.x-page {
+  --x-blue: #2563eb;
+  --x-blue-dark: #1d4ed8;
+  --x-blue-soft: #eff6ff;
+  --x-ink: #0f172a;
+  --x-muted: #64748b;
+  --x-line: #e5eaf2;
+  --x-green: #16a34a;
+  --x-red: #dc2626;
+  --x-amber: #d97706;
+
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 16px 64px;
+  color: var(--x-ink);
+}
+
+.x-page h1 { margin: 0 0 4px; font-size: clamp(1.4rem, 4vw, 2rem); }
+.x-sub { margin: 0 0 20px; color: var(--x-muted); }
+
+.x-card {
+  background: #fff;
+  border: 1px solid var(--x-line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 24px -18px rgba(15, 23, 42, 0.35);
+}
+
+.x-card h2 { margin: 0 0 14px; font-size: 1.05rem; }
+
+.x-grid { display: grid; gap: 14px; }
+.x-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.x-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---- Header / tabs ---- */
+.x-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+
+.x-live { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: #f1f5f9; color: var(--x-muted); }
+.x-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+.x-live.on { background: #ecfdf3; color: var(--x-green); }
+.x-live.on::before { background: var(--x-green); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.6); animation: x-pulse 1.8s infinite; }
+@keyframes x-pulse { 70% { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
+
+.x-tabs { display: flex; gap: 6px; margin: 4px 0 18px; overflow-x: auto; padding-bottom: 2px; }
+.x-tab { flex: 0 0 auto; border: 1px solid var(--x-line); background: #fff; color: var(--x-muted); padding: 9px 16px; border-radius: 999px; font: inherit; font-weight: 600; cursor: pointer; }
+.x-tab.active { background: var(--x-blue); border-color: var(--x-blue); color: #fff; }
+
+/* ---- Stats ---- */
+.x-stat span { display: block; color: var(--x-muted); font-size: 0.85rem; }
+.x-stat strong { display: block; margin-top: 6px; font-size: clamp(1.3rem, 3vw, 1.8rem); }
+
+/* ---- Bar chart ---- */
+.x-chart { display: flex; align-items: flex-end; gap: 10px; height: 190px; padding-top: 8px; }
+.x-bar { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+.x-bar i { display: block; width: 100%; max-width: 46px; min-height: 3px; border-radius: 8px 8px 3px 3px; background: linear-gradient(180deg, #60a5fa, var(--x-blue)); }
+.x-bar small { color: var(--x-muted); font-size: 0.72rem; }
+.x-bar b { font-size: 0.72rem; }
+
+/* ---- Lists ---- */
+.x-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.x-list li { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 1px dashed var(--x-line); font-size: 0.93rem; }
+.x-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.x-empty { margin: 0; color: var(--x-muted); }
+
+/* ---- Tables ---- */
+.x-table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--x-line); border-radius: 14px; background: #fff; }
+.x-table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 0.9rem; }
+.x-table th, .x-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--x-line); vertical-align: middle; }
+.x-table th { background: #f8fafc; color: var(--x-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.x-table tr:last-child td { border-bottom: 0; }
+.x-thumb { width: 42px; height: 42px; border-radius: 10px; object-fit: cover; background: #f1f5f9; }
+
+/* ---- Badges ---- */
+.x-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 700; text-transform: capitalize; background: #f1f5f9; color: var(--x-muted); }
+.x-badge.pending { background: #fffbeb; color: var(--x-amber); }
+.x-badge.confirmed, .x-badge.processing { background: var(--x-blue-soft); color: var(--x-blue); }
+.x-badge.shipped { background: #f5f3ff; color: #7c3aed; }
+.x-badge.delivered, .x-badge.paid { background: #ecfdf3; color: var(--x-green); }
+.x-badge.cancelled, .x-badge.failed { background: #fef2f2; color: var(--x-red); }
+.x-low { color: var(--x-red); font-weight: 700; }
+
+/* ---- Buttons & forms ---- */
+.x-btn { border: 0; border-radius: 10px; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer; background: var(--x-blue); color: #fff; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.x-btn:hover:not(:disabled) { background: var(--x-blue-dark); }
+.x-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.x-btn.ghost { background: #fff; color: var(--x-ink); border: 1px solid var(--x-line); }
+.x-btn.ghost:hover:not(:disabled) { background: #f8fafc; }
+.x-btn.danger { background: #fff; color: var(--x-red); border: 1px solid #fecaca; }
+.x-btn.danger:hover:not(:disabled) { background: #fef2f2; }
+.x-btn.sm { padding: 6px 10px; font-size: 0.82rem; }
+.x-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.x-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.x-form .full { grid-column: 1 / -1; }
+.x-field { display: grid; gap: 6px; font-size: 0.85rem; font-weight: 600; }
+.x-field input, .x-field textarea, .x-select { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid var(--x-line); border-radius: 10px; font: inherit; color: var(--x-ink); background: #fff; }
+.x-field input:focus, .x-field textarea:focus, .x-select:focus { outline: 2px solid #bfdbfe; border-color: var(--x-blue); }
+.x-select { width: auto; padding: 7px 10px; }
+
+.x-msg { padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 0.9rem; background: #fef2f2; color: var(--x-red); }
+
+/* ---- Toasts ---- */
+.x-toasts { position: fixed; top: 84px; right: 14px; z-index: 80; display: grid; gap: 8px; width: min(340px, calc(100vw - 28px)); }
+.x-toast { padding: 12px 14px; border-radius: 12px; background: #0f172a; color: #fff; font-size: 0.9rem; box-shadow: 0 14px 30px -12px rgba(15, 23, 42, 0.6); animation: x-in 0.25s ease; }
+.x-toast.ok { background: #15803d; }
+.x-toast.err { background: #b91c1c; }
+@keyframes x-in { from { opacity: 0; transform: translateY(-8px); } }
+
+/* ---- My orders ---- */
+.x-orders { display: grid; gap: 14px; }
+.x-order-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.x-order-top small { display: block; color: var(--x-muted); }
+.x-order-items { margin: 0 0 12px; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 0.92rem; }
+.x-order-items li { display: flex; justify-content: space-between; gap: 10px; }
+.x-timeline { list-style: none; margin: 12px 0; padding: 0 0 0 14px; border-left: 2px solid var(--x-line); display: grid; gap: 8px; font-size: 0.85rem; }
+.x-timeline li { position: relative; display: flex; justify-content: space-between; gap: 10px; text-transform: capitalize; }
+.x-timeline li::before { content: ""; position: absolute; left: -20px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: var(--x-blue); }
+.x-timeline time { color: var(--x-muted); text-transform: none; }
+.x-order-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.x-banner { padding: 12px 14px; border-radius: 12px; margin-bottom: 14px; background: #ecfdf3; color: var(--x-green); font-weight: 600; }
+
+/* ---- Demo payment ---- */
+.x-pay { max-width: 460px; margin: 0 auto; }
+.x-pay .x-note { padding: 10px 12px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 0.84rem; margin-bottom: 14px; }
+.x-pay-total { display: flex; justify-content: space-between; align-items: center; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--x-blue-soft); }
+.x-pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.x-pay .x-field { margin-bottom: 12px; }
+
+/* ---- Payment method picker (Checkout) ---- */
+.x-methods { display: grid; gap: 10px; margin: 0 0 16px; padding: 0; border: 0; }
+.x-method { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border: 1.5px solid #e5eaf2; border-radius: 14px; cursor: pointer; background: #fff; }
+.x-method.selected { border-color: #2563eb; background: #eff6ff; }
+.x-method input { margin-top: 4px; accent-color: #2563eb; }
+.x-method strong { display: block; color: #0f172a; }
+.x-method small { color: #64748b; }
+.x-methods-title { margin: 0 0 10px; font-size: 1.05rem; color: #0f172a; }
+
+@media (max-width: 860px) {
+  .x-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .x-grid-2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .x-form { grid-template-columns: 1fr; }
+  .x-pay-row { grid-template-columns: 1fr; }
+  .x-toasts { top: 70px; }
+}

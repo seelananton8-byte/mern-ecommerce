@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CardContext.jsx";
+import { createOrder, proceedToPayment } from "../services/orderService";
+import { getToken } from "../services/api";
 import "../styles/checkout.css";
+import "../styles/app-extra.css";
 
 /* ---------- Inline SVG icons ---------- */
 
@@ -115,6 +118,14 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [payMethod, setPayMethod] = useState("online");
+
+  // Same key on retries/double clicks, so the server never creates a duplicate order
+  const [idempotencyKey] = useState(() =>
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `k${Date.now()}${Math.random().toString(36).slice(2)}`
+  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -129,45 +140,61 @@ export default function Checkout() {
     }));
   };
 
-  const handleSubmit = (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (submitting) return;
+    if (submitting) return;
 
-  if (cartItems.length === 0) {
-    setError("Your cart is empty.");
-    return;
-  }
+    if (cartItems.length === 0) {
+      setError("Your cart is empty.");
+      return;
+    }
 
-  setError("");
+    // Orders belong to a user account, so the customer must be signed in
+    if (!getToken()) {
+      navigate("/login", { state: { from: "/checkout" } });
+      return;
+    }
 
-  const order = {
-    id: `ORD-${Date.now()}`,
-    name: formData.name.trim(),
-    email: formData.email.trim(),
-    phone: formData.phone,
-    address: formData.address.trim(),
-    city: formData.city.trim(),
-    pincode: formData.pincode,
-    items: cartItems.map((item) => ({ ...item })),
-    itemCount: cartItems.reduce(
-      (total, item) => total + item.quantity,
-      0
-    ),
-    total: cartTotal,
-    status: "Confirmed",
-    paymentStatus: "Pending",
-    createdAt: new Date().toISOString(),
+    setError("");
+    setSubmitting(true);
+
+    try {
+      // Prices and stock are verified by the server, never trusted from the browser
+      const data = await createOrder({
+        items: cartItems.map((item) => ({
+          productId: String(item.id),
+          quantity: item.quantity,
+        })),
+        shippingAddress: {
+          fullName: formData.name.trim(),
+          addressLine: formData.address.trim(),
+          city: formData.city.trim(),
+          postalCode: formData.pincode,
+          phone: formData.phone,
+        },
+        paymentProvider: payMethod === "cod" ? "cash_on_delivery" : "stripe",
+        idempotencyKey,
+      });
+
+      const order = data.order;
+      clearCart();
+
+      if (payMethod === "cod") {
+        navigate("/order-success", { state: { order } });
+        return;
+      }
+
+      try {
+        await proceedToPayment(order._id, navigate);
+      } catch (paymentError) {
+        navigate("/orders", { state: { paymentError: paymentError.message } });
+      }
+    } catch (err) {
+      setError(err.message || "Unable to place your order. Please try again.");
+      setSubmitting(false);
+    }
   };
-
-  setSubmitting(true);
-
-  clearCart();
-
-  navigate("/order-success", {
-    state: { order },
-  });
-};
 
   if (cartItems.length === 0) {
     return (
@@ -314,6 +341,26 @@ export default function Checkout() {
             </div>
           </div>
 
+          <div className="checkout-section">
+            <h2 className="x-methods-title">Payment method</h2>
+            <fieldset className="x-methods">
+              <label className={`x-method ${payMethod === "online" ? "selected" : ""}`}>
+                <input type="radio" name="pay" checked={payMethod === "online"} onChange={() => setPayMethod("online")} />
+                <span>
+                  <strong>Pay online by card</strong>
+                  <small>Secure card payment (Stripe). Order is confirmed instantly.</small>
+                </span>
+              </label>
+              <label className={`x-method ${payMethod === "cod" ? "selected" : ""}`}>
+                <input type="radio" name="pay" checked={payMethod === "cod"} onChange={() => setPayMethod("cod")} />
+                <span>
+                  <strong>Cash on delivery</strong>
+                  <small>Pay when your order arrives.</small>
+                </span>
+              </label>
+            </fieldset>
+          </div>
+
           {error && (
             <div className="checkout-error" role="alert">
               {error}
@@ -325,7 +372,11 @@ export default function Checkout() {
             className="place-order-btn"
             disabled={submitting}
           >
-            {submitting ? "Placing order..." : "Place order"}
+            {submitting
+              ? "Placing order..."
+              : payMethod === "online"
+                ? "Place order & pay"
+                : "Place order"}
           </button>
         </form>
 

@@ -1,19 +1,24 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
+
 const User = require("../models/User");
 const authMiddleware = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
 
 const router = express.Router();
-
 const isProd = process.env.NODE_ENV === "production";
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
 
 // bcrypt only uses the first 72 BYTES of a password
 const MAX_PASSWORD_BYTES = 72;
 
-// Dummy hash so login takes the same time whether the email exists or not
-// (prevents user enumeration via response timing)
+// Dummy hash so login takes similar time if email does not exist
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 12);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,7 +48,9 @@ router.post("/register", async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(409).json({
@@ -54,7 +61,7 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // role is NEVER taken from req.body (schema default "user" applies)
+    // Never accept role from the client.
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
@@ -95,7 +102,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// POST: Login
+// POST: Login with email and password
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -118,7 +125,6 @@ router.post("/login", async (req, res) => {
       email: email.trim().toLowerCase(),
     }).select("+password");
 
-    // Always run bcrypt.compare (constant-ish time)
     const passwordMatches = await bcrypt.compare(
       password,
       user ? user.password : DUMMY_HASH
@@ -158,6 +164,122 @@ router.post("/login", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Unable to log in.",
+    });
+  }
+});
+
+// POST: Continue with Google
+router.post("/google", async (req, res) => {
+  try {
+    const { credential } = req.body || {};
+
+    if (
+      typeof credential !== "string" ||
+      !credential ||
+      !process.env.GOOGLE_CLIENT_ID
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential is required.",
+      });
+    }
+
+    // Verify the Google ID token on the server.
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (
+      !payload ||
+      !payload.sub ||
+      !payload.email ||
+      payload.email_verified !== true
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Unable to verify your Google account.",
+      });
+    }
+
+    const googleId = payload.sub;
+    const normalizedEmail = payload.email.trim().toLowerCase();
+
+    // Find an existing account linked to this Google identity.
+    let user = await User.findOne({ googleId });
+
+    if (!user) {
+      // Do not automatically link to an existing password account.
+      const existingUser = await User.findOne({
+        email: normalizedEmail,
+      });
+
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "An account with this email already exists. Please sign in using your existing method.",
+        });
+      }
+
+      // Google-only users still require a password field in the current schema.
+      // This random password is never shown to or supplied by the user.
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+      const googleName =
+        typeof payload.name === "string" &&
+        payload.name.trim().length >= 2
+          ? payload.name.trim().slice(0, 100)
+          : normalizedEmail.split("@")[0].slice(0, 100);
+
+      user = await User.create({
+        name: googleName,
+        email: normalizedEmail,
+        googleId,
+        password: hashedPassword,
+        // Role defaults to "user".
+      });
+    }
+
+    // Create the same JWT used by regular login.
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h", algorithm: "HS256" }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Google sign-in successful.",
+      token,
+      expiresIn: 3600,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "An account with this email or Google identity already exists. Please try again.",
+      });
+    }
+
+    console.error("Google sign-in error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to sign in with Google.",
     });
   }
 });

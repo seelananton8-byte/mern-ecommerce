@@ -40,6 +40,15 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Order tracking timeline (every status change is recorded)
+const historySchema = new mongoose.Schema(
+  {
+    status: { type: String, required: true },
+    at: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -113,6 +122,8 @@ const orderSchema = new mongoose.Schema(
       maxlength: 100,
     },
 
+    statusHistory: { type: [historySchema], default: [] },
+
     shippingAddress: {
       fullName: {
         type: String,
@@ -135,6 +146,11 @@ const orderSchema = new mongoose.Schema(
       postalCode: {
         type: String,
         required: true,
+        trim: true,
+        maxlength: 20,
+      },
+      phone: {
+        type: String,
         trim: true,
         maxlength: 20,
       },

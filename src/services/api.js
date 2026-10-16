@@ -1,14 +1,33 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// One place for the API URL. Accepts either env name so nothing breaks.
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api";
 
-if (!API_BASE_URL) {
-  throw new Error("VITE_API_BASE_URL is not configured");
+// Socket.io lives on the same host, without the "/api" suffix
+export const SOCKET_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+
+export function getToken() {
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+}
+
+export function getStoredUser() {
+  try {
+    const raw = localStorage.getItem("user") || sessionStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function apiRequest(endpoint, options = {}) {
+  const token = getToken();
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });

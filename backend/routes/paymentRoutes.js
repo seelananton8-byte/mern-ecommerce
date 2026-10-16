@@ -2,8 +2,18 @@ const express = require("express");
 const Stripe = require("stripe");
 const Order = require("../models/Order");
 const authMiddleware = require("../middleware/authMiddleware");
+const { emitOrderUpdate } = require("../socket");
 
 const router = express.Router();
+
+// DEMO mode: no Stripe account needed. A fake card page marks the order as paid.
+// Active when PAYMENT_MODE=demo OR when STRIPE_SECRET_KEY is not set.
+const isDemoMode = () =>
+  process.env.PAYMENT_MODE === "demo" || !process.env.STRIPE_SECRET_KEY;
+
+router.get("/config", (req, res) => {
+  res.json({ success: true, mode: isDemoMode() ? "demo" : "stripe" });
+});
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -35,6 +45,11 @@ router.post("/checkout-session", authMiddleware, async (req, res) => {
     }
 
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+    if (isDemoMode()) {
+      return res.status(200).json({ success: true, demo: true, orderId: String(order._id) });
+    }
+
     const stripe = getStripe();
 
     // Reuse an open session if the user double-clicks or retries the request.
@@ -82,6 +97,54 @@ router.post("/checkout-session", authMiddleware, async (req, res) => {
       success: false,
       message: error.status ? error.message : "Unable to start Stripe checkout.",
     });
+  }
+});
+
+// DEMO payment: simulates a card payment (only when demo mode is on).
+// Card 4000 0000 0000 0002 is declined, any other valid-looking card succeeds.
+router.post("/demo-pay", authMiddleware, async (req, res) => {
+  try {
+    if (!isDemoMode()) {
+      return res.status(403).json({ success: false, message: "Demo payments are disabled." });
+    }
+    const { orderId, cardNumber } = req.body || {};
+    if (typeof orderId !== "string" || !/^[a-f\d]{24}$/i.test(orderId)) {
+      return res.status(400).json({ success: false, message: "A valid orderId is required." });
+    }
+    const digits = String(cardNumber || "").replace(/\D/g, "");
+    if (digits.length < 12 || digits.length > 19) {
+      return res.status(400).json({ success: false, message: "Enter a valid card number." });
+    }
+    if (digits === "4000000000000002") {
+      return res.status(402).json({ success: false, message: "Your card was declined (demo)." });
+    }
+    const order = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        user: req.user.userId,
+        paymentProvider: "stripe",
+        paymentStatus: { $ne: "paid" },
+        status: "pending",
+      },
+      {
+        $set: {
+          paymentStatus: "paid",
+          paidAt: new Date(),
+          status: "confirmed",
+          paymentIntentId: `demo_pi_${orderId}`,
+        },
+        $push: { statusHistory: { status: "confirmed" } },
+      },
+      { new: true }
+    ).select(safeOrderQuery());
+    if (!order) {
+      return res.status(409).json({ success: false, message: "This order cannot be paid." });
+    }
+    emitOrderUpdate(req.app.get("io"), order, "paid");
+    return res.json({ success: true, message: "Demo payment successful.", order });
+  } catch (error) {
+    console.error("Demo payment error:", error.message);
+    return res.status(500).json({ success: false, message: "Unable to process demo payment." });
   }
 });
 

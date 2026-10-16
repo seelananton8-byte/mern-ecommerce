@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 import "../styles/auth.css";
 
 const API_URL =
@@ -42,27 +42,6 @@ const EyeOffIcon = () => (
   </svg>
 );
 
-const GoogleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      fill="#4285F4"
-      d="M22.6 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.4-4.7 3.4-7.8z"
-    />
-    <path
-      fill="#34A853"
-      d="M12 23c3 0 5.4-1 7.2-2.7l-3.5-2.7c-1 .7-2.2 1-3.7 1-2.8 0-5.2-1.9-6-4.5H2.4v2.8A11 11 0 0 0 12 23z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M6 14.1a6.6 6.6 0 0 1 0-4.2V7.1H2.4a11 11 0 0 0 0 9.8L6 14.1z"
-    />
-    <path
-      fill="#EA4335"
-      d="M12 5.4c1.6 0 3 .6 4.2 1.6l3.1-3.1A11 11 0 0 0 2.4 7.1L6 9.9c.8-2.6 3.2-4.5 6-4.5z"
-    />
-  </svg>
-);
-
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,12 +51,43 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const getDestination = () => {
+    const requestedPath = location.state?.from;
+
+    return typeof requestedPath === "string" &&
+      requestedPath.startsWith("/") &&
+      !requestedPath.startsWith("//")
+      ? requestedPath
+      : "/";
+  };
+
+  const saveLogin = (data) => {
+    if (!data?.token || !data?.user) {
+      throw new Error("Login response is incomplete.");
+    }
+
+    const storage = rememberMe ? localStorage : sessionStorage;
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+
+    storage.setItem("token", data.token);
+    storage.setItem("user", JSON.stringify(data.user));
+
+    window.dispatchEvent(new Event("authchange"));
+
+    navigate(getDestination(), { replace: true });
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (loading) return;
+    if (loading || googleLoading) return;
 
     setLoading(true);
     setError("");
@@ -97,30 +107,12 @@ export default function Login() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok || !data.success || !data.token || !data.user) {
-        throw new Error(data.message || "Unable to sign in. Please try again.");
+        throw new Error(
+          data.message || "Unable to sign in. Please try again."
+        );
       }
 
-      // Remember-me controls whether the session survives closing the tab.
-      const storage = rememberMe ? localStorage : sessionStorage;
-
-      // Clear stale credentials from the other storage.
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      sessionStorage.removeItem("token");
-      sessionStorage.removeItem("user");
-
-      storage.setItem("token", data.token);
-      storage.setItem("user", JSON.stringify(data.user));
-
-      const requestedPath = location.state?.from;
-      const destination =
-        typeof requestedPath === "string" &&
-        requestedPath.startsWith("/") &&
-        !requestedPath.startsWith("//")
-          ? requestedPath
-          : "/";
-
-      navigate(destination, { replace: true });
+      saveLogin(data);
     } catch (err) {
       setError(
         err instanceof TypeError
@@ -129,6 +121,48 @@ export default function Login() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (googleResponse) => {
+    if (loading || googleLoading) return;
+
+    if (!googleResponse?.credential) {
+      setError("Google did not return a credential. Please try again.");
+      return;
+    }
+
+    setGoogleLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_URL}/auth/google`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          credential: googleResponse.credential,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success || !data.token || !data.user) {
+        throw new Error(
+          data.message || "Unable to sign in with Google."
+        );
+      }
+
+      saveLogin(data);
+    } catch (err) {
+      setError(
+        err instanceof TypeError
+          ? "Cannot connect to the server. Please make sure the backend is running."
+          : err.message || "Google sign-in failed. Please try again."
+      );
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -147,18 +181,7 @@ export default function Login() {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && (
-            <div
-              role="alert"
-              aria-live="polite"
-              style={{
-                padding: "12px 14px",
-                marginBottom: "16px",
-                borderRadius: "8px",
-                background: "#fef2f2",
-                color: "#b91c1c",
-                fontSize: "14px",
-              }}
-            >
+            <div className="auth-error" role="alert" aria-live="polite">
               {error}
             </div>
           )}
@@ -228,7 +251,7 @@ export default function Login() {
           <button
             type="submit"
             className="auth-submit"
-            disabled={loading}
+            disabled={loading || googleLoading}
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>
@@ -238,16 +261,14 @@ export default function Login() {
           <span>or</span>
         </div>
 
-        <button
-          type="button"
-          className="google-btn"
-          onClick={() =>
-            setError("Google sign-in is not configured yet.")
+        <GoogleAuthButton
+          loading={googleLoading}
+          loadingText="Signing in with Google..."
+          onSuccess={handleGoogleSuccess}
+          onError={() =>
+            setError("Google sign-in failed. Please try again.")
           }
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
+        />
 
         <p className="auth-switch">
           Don't have an account?
