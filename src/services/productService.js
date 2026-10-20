@@ -1,4 +1,4 @@
-import { apiRequest } from "./api";
+import { backendRequest } from "./api";
 
 /* The backend returns Mongo documents ({ _id, image, ... }).
    The UI components expect { id, thumbnail, images }, so map them here. */
@@ -20,13 +20,13 @@ function normalize(product) {
 }
 
 export async function getProducts() {
-  const data = await apiRequest("/products?limit=100");
+  const data = await backendRequest("/products?limit=100");
 
   return (data.products || []).map(normalize);
 }
 
 export async function getProductById(id) {
-  const data = await apiRequest(`/products/${encodeURIComponent(id)}`);
+  const data = await backendRequest(`/products/${encodeURIComponent(id)}`);
 
   return normalize(data.product || data);
 }
@@ -43,7 +43,7 @@ const pickFields = (p) => ({
 });
 
 export async function createProduct(product) {
-  const data = await apiRequest("/products", {
+  const data = await backendRequest("/products", {
     method: "POST",
     body: JSON.stringify(pickFields(product)),
   });
@@ -51,7 +51,7 @@ export async function createProduct(product) {
 }
 
 export async function updateProduct(id, product) {
-  const data = await apiRequest(`/products/${encodeURIComponent(id)}`, {
+  const data = await backendRequest(`/products/${encodeURIComponent(id)}`, {
     method: "PUT",
     body: JSON.stringify(pickFields(product)),
   });
@@ -59,7 +59,7 @@ export async function updateProduct(id, product) {
 }
 
 export function deleteProduct(id) {
-  return apiRequest(`/products/${encodeURIComponent(id)}`, {
+  return backendRequest(`/products/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }

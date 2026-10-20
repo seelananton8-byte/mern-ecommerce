@@ -1,6 +1,7 @@
-import { apiRequest } from "./api";
+import { backendRequest } from "./api";
 
-export const shortId = (id) => `#${String(id || "").slice(-8).toUpperCase()}`;
+export const shortId = (id) =>
+  `#${String(id || "").slice(-8).toUpperCase()}`;
 
 /* Creates an order. Price and stock are always decided by the server. */
 export async function createOrder(order) {
@@ -8,44 +9,51 @@ export async function createOrder(order) {
     throw new Error("Cannot create an order without items.");
   }
 
-  return apiRequest("/orders", {
+  return backendRequest("/orders", {
     method: "POST",
     body: JSON.stringify(order),
   });
 }
 
-export const getMyOrders = () => apiRequest("/orders?limit=50");
+export const getMyOrders = () =>
+  backendRequest("/orders?limit=50");
 
-export const getOrder = (id) => apiRequest(`/orders/${encodeURIComponent(id)}`);
+export const getOrder = (id) =>
+  backendRequest(`/orders/${encodeURIComponent(id)}`);
 
 export const cancelOrder = (id) =>
-  apiRequest(`/orders/${encodeURIComponent(id)}/cancel`, { method: "PATCH" });
+  backendRequest(`/orders/${encodeURIComponent(id)}/cancel`, {
+    method: "PATCH",
+  });
 
 /* ---------- Payments ---------- */
 
-export const getPaymentMode = () => apiRequest("/payments/config");
+export const getPaymentMode = () =>
+  backendRequest("/payments/config");
 
 export const startCheckout = (orderId) =>
-  apiRequest("/payments/checkout-session", {
+  backendRequest("/payments/checkout-session", {
     method: "POST",
     body: JSON.stringify({ orderId }),
   });
 
 export const demoPay = (orderId, cardNumber) =>
-  apiRequest("/payments/demo-pay", {
+  backendRequest("/payments/demo-pay", {
     method: "POST",
     body: JSON.stringify({ orderId, cardNumber }),
   });
 
 export const getSessionStatus = (sessionId) =>
-  apiRequest(`/payments/session-status?session_id=${encodeURIComponent(sessionId)}`);
+  backendRequest(
+    `/payments/session-status?session_id=${encodeURIComponent(sessionId)}`
+  );
 
 /* Demo mode -> our fake card page. Stripe mode -> Stripe Checkout. */
 export async function proceedToPayment(orderId, navigate) {
   const data = await startCheckout(orderId);
 
   if (data.demo) {
-    navigate(`/demo-payment?order_id=${orderId}`);
+    navigate(`/demo-payment?order_id=${encodeURIComponent(orderId)}`);
     return;
   }
 

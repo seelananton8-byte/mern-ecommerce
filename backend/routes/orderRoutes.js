@@ -1,9 +1,9 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
-// IMPORTANT: same casing everywhere (models/Order.js, models/Product.js)
+// IMPORTANT: match model filename casing on case-sensitive filesystems.
 const Order = require("../models/Order");
-const Product = require("../models/Product");
+const Product = require("../models/product");
 const authMiddleware = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
 const { emitOrderUpdate } = require("../socket");

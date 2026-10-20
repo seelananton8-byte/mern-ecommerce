@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import { API_BASE_URL } from "../services/api";
 import "../styles/auth.css";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const EyeIcon = () => (
   <svg
@@ -93,7 +91,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -136,7 +134,7 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/auth/google`, {
+      const response = await fetch(`${API_BASE_URL}/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -204,16 +202,12 @@ export default function Login() {
           <div className="auth-group">
             <div className="password-label">
               <label htmlFor="password">Password</label>
-              <button
-                type="button"
-                onClick={() =>
-                  setError(
-                    "Password reset is not configured yet. Please contact the administrator."
-                  )
-                }
+              <Link
+                to="/forgot-password"
+                className="forgot-password-link"
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             <div className="password-input">

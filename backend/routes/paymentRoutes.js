@@ -1,32 +1,35 @@
+const crypto = require("crypto");
 const express = require("express");
-const Stripe = require("stripe");
 const Order = require("../models/Order");
 const authMiddleware = require("../middleware/authMiddleware");
 const { emitOrderUpdate } = require("../socket");
+const {
+  expireUnpaidOrder,
+  getStripe,
+  getStripeCurrency,
+  isDemoMode,
+  isStripeSessionForOrder,
+  markOrderPaid,
+} = require("../services/paymentService");
 
 const router = express.Router();
-
-// DEMO mode: no Stripe account needed. A fake card page marks the order as paid.
-// Active when PAYMENT_MODE=demo OR when STRIPE_SECRET_KEY is not set.
-const isDemoMode = () =>
-  process.env.PAYMENT_MODE === "demo" || !process.env.STRIPE_SECRET_KEY;
+const SAFE_ORDER_SELECT = "-stripeSessionId -paymentIntentId -idempotencyKey";
 
 router.get("/config", (req, res) => {
-  res.json({ success: true, mode: isDemoMode() ? "demo" : "stripe" });
-});
-
-function getStripe() {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    const error = new Error("Stripe is not configured. Set STRIPE_SECRET_KEY.");
-    error.status = 503;
-    throw error;
+  if (isDemoMode()) {
+    return res.json({ success: true, mode: "demo" });
   }
-  return new Stripe(process.env.STRIPE_SECRET_KEY);
-}
-
-function safeOrderQuery() {
-  return "-stripeSessionId -paymentIntentId -idempotencyKey";
-}
+  try {
+    getStripe();
+    getStripeCurrency();
+    return res.json({ success: true, mode: "stripe" });
+  } catch (error) {
+    return res.status(error.status || 503).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
 
 // The order must already exist and its amount/items are always read from MongoDB.
 router.post("/checkout-session", authMiddleware, async (req, res) => {
@@ -51,41 +54,90 @@ router.post("/checkout-session", authMiddleware, async (req, res) => {
     }
 
     const stripe = getStripe();
+    const currency = getStripeCurrency();
 
-    // Reuse an open session if the user double-clicks or retries the request.
+    // Reuse a session after checking it against the persisted order.
     if (order.stripeSessionId) {
+      let previousSession;
       try {
-        const previousSession = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
-        if (previousSession.status === "open" && previousSession.url) {
-          return res.status(200).json({ success: true, checkoutUrl: previousSession.url, sessionId: previousSession.id });
-        }
-        if (previousSession.payment_status === "paid") {
-          return res.status(409).json({ success: false, message: "This order has already been paid." });
-        }
+        previousSession = await stripe.checkout.sessions.retrieve(order.stripeSessionId);
       } catch (retrieveError) {
-        // A stale session ID must not prevent a new session from being created.
-        console.warn("Could not retrieve previous Stripe session:", retrieveError.message);
+        console.error("Could not verify existing Stripe session:", retrieveError.message);
+        return res.status(503).json({
+          success: false,
+          message: "Unable to verify the existing payment session.",
+        });
       }
+
+      if (!isStripeSessionForOrder(order, previousSession, currency)) {
+        return res.status(409).json({
+          success: false,
+          message: "The existing payment session does not match this order.",
+        });
+      }
+
+      if (previousSession.status === "expired") {
+        await expireUnpaidOrder(previousSession, req.app.get("io"));
+        return res.status(409).json({
+          success: false,
+          message: "This payment session expired. Please place a new order.",
+        });
+      }
+
+      if (previousSession.status === "open" && previousSession.url) {
+        return res.status(200).json({
+          success: true,
+          checkoutUrl: previousSession.url,
+          sessionId: previousSession.id,
+        });
+      }
+
+      if (
+        previousSession.status === "complete" &&
+        previousSession.payment_status === "paid"
+      ) {
+        await markOrderPaid({ order, session: previousSession, currency, io: req.app.get("io") });
+        return res.status(409).json({
+          success: false,
+          message: "This order has already been paid.",
+        });
+      }
+
+      return res.status(409).json({
+        success: false,
+        message: "This payment session is no longer open. Please place a new order.",
+      });
     }
 
+    const lineItems = order.items.map((item) => ({
+      quantity: item.quantity,
+      price_data: {
+        currency,
+        unit_amount: Math.round(item.price * 100),
+        product_data: { name: item.title },
+      },
+    }));
+
+    // Hash of the request params: same params => same key (safe retries),
+    // changed params => new key (no "idempotent keys" error).
+    const paramsHash = crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ lineItems, currency }))
+      .digest("hex")
+      .slice(0, 12);
+
+    // NOTE: payment_method_types is intentionally NOT passed.
+    // Payment methods are managed from the Stripe Dashboard.
     const session = await stripe.checkout.sessions.create(
       {
         mode: "payment",
-        payment_method_types: ["card"],
-        line_items: order.items.map((item) => ({
-          quantity: item.quantity,
-          price_data: {
-            currency: (process.env.STRIPE_CURRENCY || "inr").toLowerCase(),
-            unit_amount: Math.round(item.price * 100),
-            product_data: { name: item.title },
-          },
-        })),
+        line_items: lineItems,
         metadata: { orderId: String(order._id), userId: String(order.user) },
         client_reference_id: String(order._id),
         success_url: `${clientUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${clientUrl}/checkout?payment=cancelled&order_id=${order._id}`,
       },
-      { idempotencyKey: `checkout_${String(order._id)}_${Date.now()}` }
+      { idempotencyKey: `checkout_${String(order._id)}_${paramsHash}` }
     );
 
     order.stripeSessionId = session.id;
@@ -93,9 +145,14 @@ router.post("/checkout-session", authMiddleware, async (req, res) => {
     return res.status(201).json({ success: true, checkoutUrl: session.url, sessionId: session.id });
   } catch (error) {
     console.error("Create Stripe checkout error:", error.message);
-    return res.status(error.status || 500).json({
+    const status =
+      error.status ||
+      (error.type === "StripeAuthenticationError" ? 503 : 500);
+    return res.status(status).json({
       success: false,
-      message: error.status ? error.message : "Unable to start Stripe checkout.",
+      message: status === 503
+        ? "Stripe is not configured or available."
+        : "Unable to start Stripe checkout.",
     });
   }
 });
@@ -111,7 +168,10 @@ router.post("/demo-pay", authMiddleware, async (req, res) => {
     if (typeof orderId !== "string" || !/^[a-f\d]{24}$/i.test(orderId)) {
       return res.status(400).json({ success: false, message: "A valid orderId is required." });
     }
-    const digits = String(cardNumber || "").replace(/\D/g, "");
+    if (typeof cardNumber !== "string") {
+      return res.status(400).json({ success: false, message: "Enter a valid card number." });
+    }
+    const digits = cardNumber.replace(/\D/g, "");
     if (digits.length < 12 || digits.length > 19) {
       return res.status(400).json({ success: false, message: "Enter a valid card number." });
     }
@@ -123,8 +183,9 @@ router.post("/demo-pay", authMiddleware, async (req, res) => {
         _id: orderId,
         user: req.user.userId,
         paymentProvider: "stripe",
-        paymentStatus: { $ne: "paid" },
+        paymentStatus: "pending",
         status: "pending",
+        stripeSessionId: { $exists: false },
       },
       {
         $set: {
@@ -135,8 +196,8 @@ router.post("/demo-pay", authMiddleware, async (req, res) => {
         },
         $push: { statusHistory: { status: "confirmed" } },
       },
-      { new: true }
-    ).select(safeOrderQuery());
+      { returnDocument: "after" }
+    ).select(SAFE_ORDER_SELECT);
     if (!order) {
       return res.status(409).json({ success: false, message: "This order cannot be paid." });
     }
@@ -148,25 +209,87 @@ router.post("/demo-pay", authMiddleware, async (req, res) => {
   }
 });
 
-// Frontend may call this after redirect; webhook remains the source of truth.
+// The live Stripe session is verified server-side after the Checkout redirect.
 router.get("/session-status", authMiddleware, async (req, res) => {
   try {
     const sessionId = req.query.session_id;
     if (typeof sessionId !== "string" || !sessionId.startsWith("cs_")) {
       return res.status(400).json({ success: false, message: "A valid session_id is required." });
     }
-    const order = await Order.findOne({ user: req.user.userId, stripeSessionId: sessionId }).select(safeOrderQuery());
+    const order = await Order.findOne({
+      user: req.user.userId,
+      stripeSessionId: sessionId,
+      paymentProvider: "stripe",
+    });
     if (!order) return res.status(404).json({ success: false, message: "Payment order not found." });
     const stripeSession = await getStripe().checkout.sessions.retrieve(sessionId);
+    const currency = getStripeCurrency();
+
+    if (!isStripeSessionForOrder(order, stripeSession, currency)) {
+      return res.status(409).json({
+        success: false,
+        message: "Stripe could not verify this session for the order.",
+      });
+    }
+
+    let currentOrder = order;
+    if (stripeSession.status === "complete" && stripeSession.payment_status === "paid") {
+      currentOrder = await markOrderPaid({
+        order,
+        session: stripeSession,
+        currency,
+        io: req.app.get("io"),
+      }) || await Order.findById(order._id).select(SAFE_ORDER_SELECT);
+      if (!currentOrder || currentOrder.paymentStatus !== "paid") {
+        return res.status(409).json({
+          success: false,
+          message: "Payment was received but the order could not be confirmed.",
+        });
+      }
+    } else if (stripeSession.status === "expired") {
+      await expireUnpaidOrder(stripeSession, req.app.get("io"));
+      currentOrder = await Order.findById(order._id).select(SAFE_ORDER_SELECT);
+    }
+
+    if (!currentOrder) {
+      return res.status(404).json({ success: false, message: "Payment order not found." });
+    }
+
+    if (
+      stripeSession.payment_status !== "paid" &&
+      currentOrder.paymentStatus === "paid"
+    ) {
+      return res.status(409).json({
+        success: false,
+        message: "Stripe has not verified payment for this order.",
+      });
+    }
+
+    // Private fields were needed for verification; never send them to the client.
+    const safeOrder = currentOrder.toObject();
+    delete safeOrder.stripeSessionId;
+    delete safeOrder.paymentIntentId;
+    delete safeOrder.idempotencyKey;
+
     return res.json({
       success: true,
-      paymentStatus: order.paymentStatus,
-      orderStatus: order.status,
+      verified: true,
+      paymentStatus: currentOrder.paymentStatus,
+      orderStatus: currentOrder.status,
       checkoutPaymentStatus: stripeSession.payment_status,
+      order: safeOrder,
     });
   } catch (error) {
     console.error("Stripe session status error:", error.message);
-    return res.status(500).json({ success: false, message: "Unable to verify payment status." });
+    const status =
+      error.status ||
+      (error.type === "StripeAuthenticationError" ? 503 : 500);
+    return res.status(status).json({
+      success: false,
+      message: status === 503
+        ? "Stripe is not configured or available."
+        : "Unable to verify payment status.",
+    });
   }
 });
 

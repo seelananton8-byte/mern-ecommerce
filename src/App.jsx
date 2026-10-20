@@ -16,6 +16,8 @@ import Account from "./pages/Account";
 import MyOrders from "./pages/MyOrders";
 import DemoPayment from "./pages/DemoPayment";
 import AdminDashboard from "./pages/AdminDashboard";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -54,6 +56,8 @@ function App() {
           <Route path="/orders" element={<MyOrders />} />
           <Route path="/demo-payment" element={<DemoPayment />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Routes>
       </main>
     </BrowserRouter>

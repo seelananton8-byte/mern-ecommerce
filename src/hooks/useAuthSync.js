@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { API_BASE_URL } from "../services/api";
 
 const CHECK_EVERY_MS = 5 * 60 * 1000; // re-check every 5 minutes
 
@@ -67,7 +65,7 @@ export default function useAuthSync() {
       }
 
       try {
-        const response = await fetch(`${API_URL}/auth/me`, {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

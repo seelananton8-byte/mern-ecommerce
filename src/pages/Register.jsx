@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import { API_BASE_URL } from "../services/api";
 import "../styles/auth.css";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const EyeIcon = () => (
   <svg
@@ -116,7 +114,7 @@ export default function Register() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -173,7 +171,7 @@ export default function Register() {
     try {
       setGoogleLoading(true);
 
-      const response = await fetch(`${API_URL}/auth/google`, {
+      const response = await fetch(`${API_BASE_URL}/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

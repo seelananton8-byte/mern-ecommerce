@@ -1,40 +1,171 @@
-// Usage: node scripts/seedProducts.js   (uses MONGODB_URI, only seeds when empty)
-require("dotenv").config();
-const mongoose = require("mongoose");
-const Product = require("../models/Product");
+/**
+ * Usage: node scripts/seedProducts.js
+ * Requires MONGODB_URI in .env
+ * Adds missing products until all 12 seed products exist.
+ */
 
-const img = (seed) => `https://picsum.photos/seed/${seed}/600/600`;
+require("dotenv").config();
+
+const mongoose = require("mongoose");
+const Product = require("../models/product");
+
+const img = (seed) =>
+  `https://picsum.photos/seed/${seed}/600/600`;
 
 const products = [
-  ["Wireless Headphones", "Over-ear Bluetooth headphones with 30-hour battery life.", 2499, "electronics", 25, "headphones"],
-  ["Smart Watch", "Fitness tracking, heart-rate monitor and notifications.", 3999, "electronics", 15, "smartwatch"],
-  ["Bluetooth Speaker", "Portable waterproof speaker with deep bass.", 1799, "electronics", 30, "speaker"],
-  ["Mechanical Keyboard", "RGB backlit keyboard with tactile blue switches.", 2899, "electronics", 12, "keyboard"],
-  ["Running Shoes", "Lightweight breathable shoes for daily running.", 2199, "fashion", 40, "shoes"],
-  ["Denim Jacket", "Classic fit denim jacket, 100% cotton.", 1999, "fashion", 18, "jacket"],
-  ["Leather Wallet", "Slim genuine leather wallet with card slots.", 799, "fashion", 50, "wallet"],
-  ["Backpack 25L", "Water-resistant backpack with laptop compartment.", 1499, "fashion", 22, "backpack"],
-  ["Ceramic Coffee Mug Set", "Set of 4 handmade ceramic mugs.", 899, "home", 35, "mug"],
-  ["Table Lamp", "Minimal LED desk lamp with adjustable brightness.", 1299, "home", 4, "lamp"],
-  ["Yoga Mat", "Non-slip 6mm yoga mat with carry strap.", 699, "sports", 45, "yogamat"],
-  ["Stainless Steel Bottle", "Insulated 1L bottle, keeps drinks cold for 24 hours.", 549, "sports", 3, "bottle"],
-].map(([title, description, price, category, stock, seed]) => ({
-  title, description, price, category, stock, image: img(seed),
-}));
+  {
+    title: "Wireless Headphones",
+    description: "Over-ear Bluetooth headphones with 30-hour battery life.",
+    price: 2499,
+    category: "electronics",
+    stock: 25,
+    image: img("headphones"),
+  },
+  {
+    title: "Smart Watch",
+    description: "Fitness tracking, heart-rate monitor and notifications.",
+    price: 3999,
+    category: "electronics",
+    stock: 15,
+    image: img("smartwatch"),
+  },
+  {
+    title: "Bluetooth Speaker",
+    description: "Portable waterproof speaker with deep bass.",
+    price: 1799,
+    category: "electronics",
+    stock: 30,
+    image: img("speaker"),
+  },
+  {
+    title: "Mechanical Keyboard",
+    description: "RGB backlit keyboard with tactile blue switches.",
+    price: 2899,
+    category: "electronics",
+    stock: 12,
+    image: img("keyboard"),
+  },
+  {
+    title: "Running Shoes",
+    description: "Lightweight breathable shoes for daily running.",
+    price: 2199,
+    category: "fashion",
+    stock: 40,
+    image: img("shoes"),
+  },
+  {
+    title: "Denim Jacket",
+    description: "Classic fit denim jacket, 100% cotton.",
+    price: 1999,
+    category: "fashion",
+    stock: 18,
+    image: img("jacket"),
+  },
+  {
+    title: "Leather Wallet",
+    description: "Slim genuine leather wallet with card slots.",
+    price: 799,
+    category: "fashion",
+    stock: 50,
+    image: img("wallet"),
+  },
+  {
+    title: "Backpack 25L",
+    description: "Water-resistant backpack with laptop compartment.",
+    price: 1499,
+    category: "fashion",
+    stock: 22,
+    image: img("backpack"),
+  },
+  {
+    title: "Ceramic Coffee Mug Set",
+    description: "Set of 4 handmade ceramic mugs.",
+    price: 899,
+    category: "home",
+    stock: 35,
+    image: img("mug"),
+  },
+  {
+    title: "Table Lamp",
+    description: "Minimal LED desk lamp with adjustable brightness.",
+    price: 1299,
+    category: "home",
+    stock: 4,
+    image: img("lamp"),
+  },
+  {
+    title: "Yoga Mat",
+    description: "Non-slip 6mm yoga mat with carry strap.",
+    price: 699,
+    category: "sports",
+    stock: 45,
+    image: img("yogamat"),
+  },
+  {
+    title: "Stainless Steel Bottle",
+    description: "Insulated 1L bottle, keeps drinks cold for 24 hours.",
+    price: 549,
+    category: "sports",
+    stock: 3,
+    image: img("bottle"),
+  },
+];
 
-(async () => {
+async function seedProducts() {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error("MONGODB_URI is missing from .env");
+    }
+
     await mongoose.connect(process.env.MONGODB_URI);
-    if ((await Product.countDocuments()) > 0) {
+
+    console.log("Connected to MongoDB.");
+
+    // Find existing seed products by title.
+    const existingProducts = await Product.find(
+      {
+        title: {
+          $in: products.map((product) => product.title),
+        },
+      },
+      { title: 1 }
+    );
+
+    const existingTitles = new Set(
+      existingProducts.map((product) => product.title)
+    );
+
+    const missingProducts = products.filter(
+      (product) => !existingTitles.has(product.title)
+    );
+
+    if (missingProducts.length === 0) {
       console.log("Products already exist. Skipping seed.");
     } else {
-      await Product.insertMany(products);
-      console.log(`Seeded ${products.length} products.`);
+      await Product.insertMany(missingProducts);
+
+      console.log(
+        `Seeded ${missingProducts.length} products.`
+      );
     }
-  } catch (e) {
-    console.error("Seed failed:", e.message);
+
+    const totalSeedProducts = await Product.countDocuments({
+      title: {
+        $in: products.map((product) => product.title),
+      },
+    });
+
+    console.log(
+      `Seed products in database: ${totalSeedProducts}/12`
+    );
+  } catch (error) {
+    console.error("Seed failed:", error.message);
     process.exitCode = 1;
   } finally {
-    await mongoose.disconnect();
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
   }
-})();
+}
+
+seedProducts();

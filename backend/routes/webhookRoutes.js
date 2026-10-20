@@ -1,66 +1,63 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const Order = require("../models/Order");
-const Product = require("../models/Product");
-const { emitOrderUpdate } = require("../socket");
+const {
+  expireUnpaidOrder,
+  getStripe,
+  getStripeCurrency,
+  isValidStripeSecretKey,
+  isValidStripeWebhookSecret,
+  markOrderPaid,
+} = require("../services/paymentService");
 
 const router = express.Router();
 
 async function markPaid(session, io) {
   const orderId = session.metadata && session.metadata.orderId;
   if (!orderId || !/^[a-f\d]{24}$/i.test(orderId)) return;
-  const paymentIntentId = typeof session.payment_intent === "string"
-    ? session.payment_intent
-    : session.payment_intent && session.payment_intent.id;
+  const verifiedSession = await getStripe().checkout.sessions.retrieve(session.id);
+  const order = await Order.findOne({
+    _id: orderId,
+    stripeSessionId: verifiedSession.id,
+    paymentProvider: "stripe",
+  });
+  if (!order) return;
+  if (verifiedSession.id !== session.id) return;
 
-  const updated = await Order.findOneAndUpdate(
-    { _id: orderId, paymentProvider: "stripe", stripeSessionId: session.id, paymentStatus: { $ne: "paid" }, status: { $ne: "cancelled" } },
-    { $set: { paymentStatus: "paid", paidAt: new Date(), ...(paymentIntentId ? { paymentIntentId } : {}), status: "confirmed" } },
-    { new: true }
-  );
-  if (updated) emitOrderUpdate(io, updated, "paid");
-}
-
-async function expireUnpaidOrder(session, io) {
-  const orderId = session.metadata && session.metadata.orderId;
-  if (!orderId || !/^[a-f\d]{24}$/i.test(orderId)) return;
-  const mongoSession = await mongoose.startSession();
-  let cancelled = null;
-  try {
-    await mongoSession.withTransaction(async () => {
-      const order = await Order.findOneAndUpdate(
-        { _id: orderId, stripeSessionId: session.id, paymentStatus: { $ne: "paid" }, status: { $in: ["pending"] } },
-        { $set: { status: "cancelled", paymentStatus: "failed" } },
-        { new: true, session: mongoSession }
-      );
-      if (!order) return;
-      await Product.bulkWrite(order.items.map((item) => ({
-        updateOne: { filter: { _id: item.product }, update: { $inc: { stock: item.quantity } } },
-      })), { session: mongoSession });
-      cancelled = order;
-    });
-  } finally {
-    await mongoSession.endSession();
+  const updated = await markOrderPaid({
+    order,
+    session: verifiedSession,
+    currency: getStripeCurrency(),
+    io,
+  });
+  if (!updated && order.paymentStatus !== "paid") {
+    console.warn("Stripe paid session did not match its pending order.");
   }
-  if (cancelled) emitOrderUpdate(io, cancelled, "payment_failed");
 }
 
 router.post("/", async (req, res) => {
   const signature = req.headers["stripe-signature"];
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+  if (
+    !isValidStripeSecretKey(process.env.STRIPE_SECRET_KEY) ||
+    !isValidStripeWebhookSecret(process.env.STRIPE_WEBHOOK_SECRET)
+  ) {
+    return res.status(503).json({ success: false, message: "Stripe webhook is not configured." });
+  }
+  let stripe;
+  try {
+    stripe = getStripe();
+  } catch {
     return res.status(503).json({ success: false, message: "Stripe webhook is not configured." });
   }
   let event;
   try {
-    const Stripe = require("stripe");
-    event = new Stripe(process.env.STRIPE_SECRET_KEY).webhooks.constructEvent(
+    event = stripe.webhooks.constructEvent(
       req.body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (error) {
     console.error("Stripe webhook signature error:", error.message);
-    return res.status(400).send(`Webhook Error: ${error.message}`);
+    return res.status(400).json({ success: false, message: "Invalid Stripe webhook signature." });
   }
 
   try {

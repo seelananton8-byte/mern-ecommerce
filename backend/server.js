@@ -69,6 +69,17 @@ const authLimiter = rateLimit({
   },
 });
 
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many password reset attempts. Try again later.",
+  },
+});
+
 // Looser limiter for the rest of the API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -82,6 +93,8 @@ app.use("/api", apiLimiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/auth/google", authLimiter);
+app.use("/api/auth/forgot-password", passwordResetLimiter);
+app.use("/api/auth/reset-password", passwordResetLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);

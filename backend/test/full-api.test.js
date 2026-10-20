@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 const require = createRequire(import.meta.url);
 const mongoose = require("mongoose");
 const User = require("../models/User");
-const Product = require("../models/Product");
+const Product = require("../models/product");
 const Order = require("../models/Order");
 
 const BASE = "http://localhost:5000";
