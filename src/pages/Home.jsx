@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { getProducts } from "../services/productService";
 import "../styles/home.css";
 
-/* ---------- Inline SVG icons ---------- */
+/* SVG icons */
 
 const Icon = ({ children, size = 22 }) => (
   <svg
@@ -154,7 +154,7 @@ export default function Home() {
 
   return (
     <main className="home-page">
-      {/* ================= HERO ================= */}
+      {/* HERO */}
 
       <section className="hero-section">
         <div className="hero-content">
@@ -209,7 +209,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= FEATURES ================= */}
+      {/* FEATURES */}
 
       <section className="features-section">
         <div className="feature-card">
@@ -246,7 +246,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= FEATURED PRODUCTS ================= */}
+      {/* FEATURED PRODUCTS */}
 
       <section className="featured-section">
         <div className="section-heading">
@@ -298,7 +298,7 @@ export default function Home() {
         )}
       </section>
 
-      {/* ================= CATEGORIES ================= */}
+      {/* CATEGORIES */}
 
       <section className="categories-section">
         <div className="section-heading">
@@ -319,7 +319,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= CTA ================= */}
+      {/* CTA */}
 
       <section className="home-cta">
         <h2>

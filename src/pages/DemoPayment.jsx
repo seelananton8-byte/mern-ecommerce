@@ -6,7 +6,7 @@ import "../styles/app-extra.css";
 
 const formatPrice = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
-/* Fake card page used when PAYMENT_MODE=demo (no Stripe account needed). */
+/* Fake card page used  */
 export default function DemoPayment() {
   const navigate = useNavigate();
   const [params] = useSearchParams();

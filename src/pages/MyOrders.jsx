@@ -37,7 +37,7 @@ export default function MyOrders() {
 
     load();
 
-    // Real-time: the server pushes every status / payment change of my orders
+    // Real-time the server pushes every status / payment change of my orders
     return subscribeOrderUpdates((update) => {
       setBanner(`Live update: order ${shortId(update.orderId)} is now ${update.status} (payment ${update.paymentStatus})`);
       load();

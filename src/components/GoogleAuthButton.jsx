@@ -22,10 +22,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-/**
- * Looks exactly like our own buttons (same radius / width / height),
- * but the real Google button sits on top, invisible, and receives the click.
- */
 export default function GoogleAuthButton({
   onSuccess,
   onError,
@@ -41,7 +37,6 @@ export default function GoogleAuthButton({
     if (!el) return;
 
     const update = () => {
-      // Google allows 200 - 400px
       setWidth(Math.max(200, Math.min(400, Math.floor(el.clientWidth))));
     };
 
@@ -57,13 +52,11 @@ export default function GoogleAuthButton({
       className={`google-login-wrapper${loading ? " is-loading" : ""}`}
       aria-busy={loading}
     >
-      {/* what the user SEES */}
       <div className="google-btn-visual" aria-hidden="true">
         <GoogleIcon />
         <span>{label}</span>
       </div>
 
-      {/* what the user CLICKS (real Google button, invisible) */}
       <div className="google-btn-overlay">
         {width > 0 && (
           <GoogleLogin

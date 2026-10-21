@@ -11,7 +11,7 @@ const CartContext = createContext(null);
 
 const STORAGE_KEY = "cartItems";
 
-/* ---------- Safe localStorage helpers ---------- */
+/* localStorage helpers */
 
 function loadCart() {
   try {
@@ -37,7 +37,7 @@ function saveCart(items) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   } catch {
-    // storage full or blocked (private mode): cart still works in memory
+    // storage full or blocked
   }
 }
 

@@ -18,26 +18,17 @@ const clearAuth = () => {
   window.dispatchEvent(new Event("authchange"));
 };
 
-// Reads the "exp" claim only (no verification: the server does that)
+// Reads the "exp" claim onl
 const isExpired = (token) => {
   try {
     const part = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     const { exp } = JSON.parse(atob(part));
     return typeof exp === "number" && exp * 1000 <= Date.now();
   } catch {
-    return true; // malformed token = treat as invalid
+    return true;
   }
 };
 
-/**
- * Call ONCE inside a component that is inside <BrowserRouter>, e.g. App.jsx
- *
- *  - validates the token with the server on load, on tab focus, every 5 min
- *  - removes expired / invalid / deleted-user sessions
- *  - refreshes the stored `user` from the server (so edited role/isAdmin in
- *    DevTools gets overwritten)
- *  - logs out other tabs when one tab logs out (localStorage sessions)
- */
 export default function useAuthSync() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -83,7 +74,7 @@ export default function useAuthSync() {
             window.dispatchEvent(new Event("authchange"));
           }
         }
-        // Network error / 5xx: do NOT log the user out, server may be down
+        // Network error
       } catch {
         /* ignore */
       }
@@ -111,6 +102,6 @@ export default function useAuthSync() {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, []);
 }

@@ -5,7 +5,7 @@ import { useCart } from "../context/CardContext.jsx";
 import "../styles/product-details.css";
 import "../styles/product-reviews.css";
 
-/* ---------- Inline SVG icons ---------- */
+/* SVG icons */
 
 const Icon = ({ children, size = 20, strokeWidth = 1.8 }) => (
   <svg
@@ -91,7 +91,7 @@ const AlertIcon = () => (
 const formatPrice = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
-/* ---------- Review storage helpers ---------- */
+/* Review storage helpers */
 
 const loadProductReviews = (productId) => {
   if (!productId) return [];
@@ -119,15 +119,11 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
   const [added, setAdded] = useState(false);
-
-  // Load reviews for the current product when state initializes.
   const [reviews, setReviews] = useState(() => loadProductReviews(id));
-
   const [reviewName, setReviewName] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewMessage, setReviewMessage] = useState("");
-
   const addedTimer = useRef(null);
   const reviewStorageKey = `product-reviews-${id}`;
   const loadedReviewKey = useRef(reviewStorageKey);

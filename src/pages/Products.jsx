@@ -4,7 +4,7 @@ import { getProducts } from "../services/productService";
 import ProductCard from "../components/ProductCard";
 import "../styles/products.css";
 
-/* ---------- Inline SVG icons ---------- */
+/* Inline SVG icons */
 
 const SearchIcon = ({ size = 20 }) => (
   <svg
@@ -39,7 +39,6 @@ const CloseIcon = () => (
   </svg>
 );
 
-/* "mens-shirts" -> "Mens shirts" */
 const prettyCategory = (value) => {
   const text = String(value || "").replace(/-/g, " ");
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -54,7 +53,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /* Category lives in the URL (?category=beauty), so links from
+  /* Category lives in the URL, so links from
      Home / Navbar can open a filtered list and the back button works. */
   const urlCategory = searchParams.get("category") || "all";
 

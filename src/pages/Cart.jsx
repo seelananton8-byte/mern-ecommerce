@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "../context/CardContext.jsx";
 import "../styles/cart.css";
 
-/* ---------- Inline SVG icons ---------- */
+/* SVG icons */
 
 const CartIcon = () => (
   <svg

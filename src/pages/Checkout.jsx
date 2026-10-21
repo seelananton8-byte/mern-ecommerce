@@ -6,7 +6,7 @@ import { getToken } from "../services/api";
 import "../styles/checkout.css";
 import "../styles/app-extra.css";
 
-/* ---------- Inline SVG icons ---------- */
+/* SVG icons */
 
 const CartIcon = () => (
   <svg
@@ -120,7 +120,7 @@ export default function Checkout() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [payMethod, setPayMethod] = useState("online");
 
-  // Same key on retries/double clicks, so the server never creates a duplicate order
+  // Same key on retries/double clicks
   const [idempotencyKey] = useState(() =>
     typeof crypto !== "undefined" && crypto.randomUUID
       ? crypto.randomUUID()
@@ -160,7 +160,7 @@ export default function Checkout() {
     setSubmitting(true);
 
     try {
-      // Prices and stock are verified by the server, never trusted from the browser
+      // Prices and stock are verified by the server
       const data = await createOrder({
         items: cartItems.map((item) => ({
           productId: String(item.id),

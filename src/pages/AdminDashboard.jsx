@@ -21,7 +21,7 @@ const formatPrice = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}
 const formatDate = (value) =>
   value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "";
 
-// Same transitions the server allows (the server is the real gatekeeper)
+// Same transitions the server allows
 const NEXT_STATUS = {
   pending: ["confirmed"],
   confirmed: ["processing"],
@@ -32,7 +32,7 @@ const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delive
 
 const EMPTY_PRODUCT = { title: "", description: "", price: "", category: "", image: "", stock: "" };
 
-/* ---------------- Overview ---------------- */
+/* Overview */
 function Overview({ stats }) {
   if (!stats) return <p className="x-empty">Loading statistics...</p>;
 
@@ -103,7 +103,7 @@ function Overview({ stats }) {
   );
 }
 
-/* ---------------- Orders ---------------- */
+/* Orders */
 function OrdersTab({ refreshKey, toast }) {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("");
@@ -193,7 +193,7 @@ function OrdersTab({ refreshKey, toast }) {
   );
 }
 
-/* ---------------- Products ---------------- */
+/* Products */
 function ProductsTab({ refreshKey, toast }) {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(EMPTY_PRODUCT);
@@ -290,7 +290,7 @@ function ProductsTab({ refreshKey, toast }) {
   );
 }
 
-/* ---------------- Users ---------------- */
+/* Users */
 function UsersTab({ toast }) {
   const [users, setUsers] = useState([]);
 
@@ -316,7 +316,7 @@ function UsersTab({ toast }) {
   );
 }
 
-/* ---------------- Page ---------------- */
+/* Page */
 export default function AdminDashboard() {
   const user = getStoredUser();
   const isAdmin = user?.role === "admin";
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
 
   useEffect(() => { if (isAdmin) loadStats(); }, [isAdmin, loadStats, refreshKey]);
 
-  // Real-time: new orders / payments / status changes are pushed by Socket.io
+  // Real-time new orders / payments / status changes are pushed by Socket.io
   useEffect(() => {
     if (!isAdmin) return undefined;
 

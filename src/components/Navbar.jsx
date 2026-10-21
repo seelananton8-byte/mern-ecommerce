@@ -10,7 +10,7 @@ import { useCart } from "../context/CardContext.jsx";
 import { useWishlist } from "../context/WishlistContext.jsx";
 import "../styles/navbar.css";
 
-/* ---------- Inline SVG icons ---------- */
+/* SVG icons */
 
 const CartIcon = () => (
   <svg
@@ -101,7 +101,7 @@ export default function Navbar() {
 
   const accountPath = isLoggedIn ? "/account" : "/login";
 
-  /* ---------- Synchronize authentication ---------- */
+  /* Synchronize authentication */
 
   const syncAuth = useCallback(() => {
     setAuth(getStoredAuth());
@@ -123,7 +123,7 @@ export default function Navbar() {
     };
   }, [syncAuth]);
 
-  /* ---------- Close mobile menu ---------- */
+  /* Close mobile menu */
 
   const closeMenu = useCallback(() => {
     setMenuOpen(false);
@@ -169,7 +169,7 @@ export default function Navbar() {
     };
   }, [menuOpen, closeMenu]);
 
-  /* ---------- Logout ---------- */
+  /* Logout */
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -186,7 +186,7 @@ export default function Navbar() {
     navigate("/", { replace: true });
   };
 
-  /* ---------- Cart badge ---------- */
+  /* Cart badge */
 
   const cartBadge =
     cartCount > 0 ? (
@@ -198,7 +198,7 @@ export default function Navbar() {
       </span>
     ) : null;
 
-  /* ---------- Wishlist badge ---------- */
+  /* Wishlist badge */
 
   const wishlistBadge =
     wishlistCount > 0 ? (
@@ -246,7 +246,7 @@ export default function Navbar() {
           )}
         </nav>
 
-        {/* DESKTOP ACTIONS */}
+        {/* DESKTOP */}
 
         <div className="desktop-actions">
           <Link
@@ -293,7 +293,7 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* MOBILE ACTIONS */}
+        {/* MOBILE */}
 
         <div className="mobile-actions">
           <Link
