@@ -1,7 +1,7 @@
 /**
  * Usage: node scripts/seedProducts.js
  * Requires MONGODB_URI in .env
- * Adds missing products until all 12 seed products exist.
+ * Adds missing products until all 30 seed products exist.
  */
 
 require("dotenv").config();
@@ -109,6 +109,159 @@ const products = [
     stock: 3,
     image: img("bottle"),
   },
+  // ---------- Electronics (+4) ----------
+  {
+    title: "Wireless Mouse",
+    description: "Ergonomic 2.4GHz wireless mouse with silent clicks and long battery life.",
+    price: 699,
+    category: "electronics",
+    stock: 60,
+    image: img("wirelessmouse"),
+  },
+  {
+    title: "Power Bank 20000mAh",
+    description: "Fast-charging power bank with dual USB ports and Type-C input.",
+    price: 1899,
+    category: "electronics",
+    stock: 35,
+    image: img("powerbank"),
+  },
+  {
+    title: "USB-C Fast Charger 65W",
+    description: "Compact GaN charger that powers laptops, tablets and phones.",
+    price: 1499,
+    category: "electronics",
+    stock: 40,
+    image: img("charger"),
+  },
+  {
+    title: "Noise Cancelling Earbuds",
+    description: "True wireless earbuds with active noise cancellation and 24-hour case.",
+    price: 2999,
+    category: "electronics",
+    stock: 28,
+    image: img("earbuds"),
+  },
+
+  // ---------- Fashion (+4) ----------
+  {
+    title: "Cotton Crew T-Shirt",
+    description: "Soft 100% cotton round-neck t-shirt, regular fit, pre-shrunk.",
+    price: 499,
+    category: "fashion",
+    stock: 80,
+    image: img("tshirt"),
+  },
+  {
+    title: "Slim Fit Chinos",
+    description: "Stretch cotton chinos with a tailored slim fit for work or weekends.",
+    price: 1299,
+    category: "fashion",
+    stock: 30,
+    image: img("chinos"),
+  },
+  {
+    title: "Polarized Sunglasses",
+    description: "UV400 polarized sunglasses with a lightweight durable frame.",
+    price: 999,
+    category: "fashion",
+    stock: 45,
+    image: img("sunglasses"),
+  },
+  {
+    title: "Canvas Sneakers",
+    description: "Everyday canvas sneakers with a cushioned insole and grippy sole.",
+    price: 1599,
+    category: "fashion",
+    stock: 38,
+    image: img("sneakers"),
+  },
+
+  // ---------- Home (+4) ----------
+  {
+    title: "Cotton Bedsheet Set",
+    description: "Double bedsheet with two pillow covers, 180 thread count cotton.",
+    price: 1199,
+    category: "home",
+    stock: 25,
+    image: img("bedsheet"),
+  },
+  {
+    title: "Wall Clock",
+    description: "Silent sweep wall clock with a minimalist dial, 12 inch.",
+    price: 649,
+    category: "home",
+    stock: 32,
+    image: img("wallclock"),
+  },
+  {
+    title: "Storage Basket Set",
+    description: "Set of 3 woven storage baskets for shelves, toys and laundry.",
+    price: 799,
+    category: "home",
+    stock: 50,
+    image: img("basket"),
+  },
+  {
+    title: "Non-Stick Cookware Set",
+    description: "3-piece non-stick cookware set with induction-friendly base.",
+    price: 2299,
+    category: "home",
+    stock: 15,
+    image: img("cookware"),
+  },
+
+  // ---------- Sports (+3) ----------
+  {
+    title: "Adjustable Dumbbell Pair",
+    description: "Pair of adjustable dumbbells, 2 to 10 kg each, with secure locks.",
+    price: 2499,
+    category: "sports",
+    stock: 20,
+    image: img("dumbbell"),
+  },
+  {
+    title: "Badminton Racket Set",
+    description: "Set of 2 lightweight rackets with 3 shuttlecocks and a carry bag.",
+    price: 1099,
+    category: "sports",
+    stock: 42,
+    image: img("badminton"),
+  },
+  {
+    title: "Skipping Rope",
+    description: "Speed skipping rope with ball bearings and adjustable length.",
+    price: 299,
+    category: "sports",
+    stock: 70,
+    image: img("skippingrope"),
+  },
+
+  // ---------- Beauty (+3) ----------
+  {
+    title: "Vitamin C Face Serum",
+    description: "Brightening 10% Vitamin C serum for a clear, even-looking skin tone.",
+    price: 599,
+    category: "beauty",
+    stock: 55,
+    image: img("serum"),
+  },
+  {
+    title: "Herbal Shampoo 500ml",
+    description: "Gentle sulphate-free herbal shampoo for daily use.",
+    price: 349,
+    category: "beauty",
+    stock: 65,
+    image: img("shampoo"),
+  },
+  {
+    title: "Sunscreen SPF 50",
+    description: "Lightweight, non-greasy sunscreen with broad spectrum protection.",
+    price: 449,
+    category: "beauty",
+    stock: 48,
+    image: img("sunscreen"),
+  },
 ];
 
 async function seedProducts() {
@@ -156,7 +309,7 @@ async function seedProducts() {
     });
 
     console.log(
-      `Seed products in database: ${totalSeedProducts}/12`
+      `Seed products in database: ${totalSeedProducts}/${products.length}`
     );
   } catch (error) {
     console.error("Seed failed:", error.message);
