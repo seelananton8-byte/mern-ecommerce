@@ -32,10 +32,13 @@
 
 .products-page a:focus-visible,
 .products-page button:focus-visible,
-.products-page select:focus-visible,
-.products-page input:focus-visible {
+.products-page select:focus-visible {
   outline: 2px solid var(--p-blue);
   outline-offset: 3px;
+}
+
+.products-page input:focus-visible {
+  outline: none;
 }
 
 /* =========================================================
