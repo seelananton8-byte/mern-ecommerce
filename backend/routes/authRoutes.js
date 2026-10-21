@@ -20,9 +20,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PASSWORD_RESET_EXPIRY_MS = 15 * 60 * 1000;
 
-// --------------------------------------------------
 // HELPERS
-// --------------------------------------------------
 
 function createMailTransporter() {
   const {
@@ -110,10 +108,8 @@ async function sendPasswordResetEmail(email, token) {
   });
 }
 
-// --------------------------------------------------
 // REGISTER
 // POST /api/auth/register
-// --------------------------------------------------
 
 router.post("/register", async (req, res) => {
   try {
@@ -185,7 +181,7 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (error) {
-    // MongoDB unique email index protection.
+    // MongoDB  email index protection.
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
@@ -202,10 +198,8 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // LOGIN
 // POST /api/auth/login
-// --------------------------------------------------
 
 router.post("/login", async (req, res) => {
   try {
@@ -281,10 +275,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // GOOGLE LOGIN
 // POST /api/auth/google
-// --------------------------------------------------
 
 router.post("/google", async (req, res) => {
   try {
@@ -332,7 +324,6 @@ router.post("/google", async (req, res) => {
         email: normalizedEmail,
       });
 
-      // Do not automatically link an existing email/password account
       // to a Google account.
       if (emailUser) {
         return res.status(409).json({
@@ -413,10 +404,8 @@ router.post("/google", async (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // FORGOT PASSWORD
 // POST /api/auth/forgot-password
-// --------------------------------------------------
 
 router.post("/forgot-password", async (req, res) => {
   const genericMessage =
@@ -450,7 +439,7 @@ router.post("/forgot-password", async (req, res) => {
       });
     }
 
-    // Generate a random token; only its SHA-256 hash is stored in MongoDB.
+    // Generate a random token
     const rawToken = crypto.randomBytes(32).toString("hex");
 
     user.passwordResetToken = crypto
@@ -472,7 +461,7 @@ router.post("/forgot-password", async (req, res) => {
         mailError.message
       );
 
-      // Best-effort cleanup if email delivery fails.
+      // cleanup if email delivery fails
       try {
         user.passwordResetToken = null;
         user.passwordResetExpires = null;
@@ -499,10 +488,8 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // RESET PASSWORD
 // POST /api/auth/reset-password/:token
-// --------------------------------------------------
 
 router.post("/reset-password/:token", async (req, res) => {
   try {
@@ -570,10 +557,8 @@ router.post("/reset-password/:token", async (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // CURRENT USER
 // GET /api/auth/me
-// --------------------------------------------------
 
 router.get("/me", authMiddleware, async (req, res) => {
   try {
@@ -615,10 +600,8 @@ router.get("/me", authMiddleware, async (req, res) => {
   }
 });
 
-// --------------------------------------------------
 // ADMIN TEST ROUTE
 // GET /api/auth/admin-test
-// --------------------------------------------------
 
 router.get(
   "/admin-test",

@@ -1,5 +1,4 @@
 require("dotenv").config();
-
 const http = require("http");
 const express = require("express");
 const mongoose = require("mongoose");
@@ -9,7 +8,6 @@ const rateLimit = require("express-rate-limit");
 const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
 const mongoSanitize = require("express-mongo-sanitize");
-
 const productRoutes = require("./routes/productRoutes");
 const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
@@ -50,7 +48,6 @@ app.use("/api/webhooks/stripe", express.raw({ type: "application/json" }), webho
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 
-// Strip $ and . keys from req.body / req.params (NoSQL injection)
 app.use((req, res, next) => {
   if (req.body) mongoSanitize.sanitize(req.body);
   if (req.params) mongoSanitize.sanitize(req.params);
@@ -80,7 +77,6 @@ const passwordResetLimiter = rateLimit({
   },
 });
 
-// Looser limiter for the rest of the API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 300,

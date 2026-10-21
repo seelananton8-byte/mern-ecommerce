@@ -1,9 +1,3 @@
-/**
- * Usage: node scripts/seedProducts.js
- * Requires MONGODB_URI in .env
- * Adds missing products until all 30 seed products exist.
- */
-
 require("dotenv").config();
 
 const mongoose = require("mongoose");
@@ -109,7 +103,7 @@ const products = [
     stock: 3,
     image: img("bottle"),
   },
-  // ---------- Electronics (+4) ----------
+  // Electronics
   {
     title: "Wireless Mouse",
     description: "Ergonomic 2.4GHz wireless mouse with silent clicks and long battery life.",
@@ -143,7 +137,7 @@ const products = [
     image: img("earbuds"),
   },
 
-  // ---------- Fashion (+4) ----------
+  // Fashion
   {
     title: "Cotton Crew T-Shirt",
     description: "Soft 100% cotton round-neck t-shirt, regular fit, pre-shrunk.",
@@ -177,7 +171,7 @@ const products = [
     image: img("sneakers"),
   },
 
-  // ---------- Home (+4) ----------
+  // Home
   {
     title: "Cotton Bedsheet Set",
     description: "Double bedsheet with two pillow covers, 180 thread count cotton.",
@@ -211,7 +205,7 @@ const products = [
     image: img("cookware"),
   },
 
-  // ---------- Sports (+3) ----------
+  // Sports
   {
     title: "Adjustable Dumbbell Pair",
     description: "Pair of adjustable dumbbells, 2 to 10 kg each, with secure locks.",
@@ -237,7 +231,7 @@ const products = [
     image: img("skippingrope"),
   },
 
-  // ---------- Beauty (+3) ----------
+  // Beauty
   {
     title: "Vitamin C Face Serum",
     description: "Brightening 10% Vitamin C serum for a clear, even-looking skin tone.",

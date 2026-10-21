@@ -118,15 +118,14 @@ router.post("/checkout-session", authMiddleware, async (req, res) => {
       },
     }));
 
-    // Hash of the request params: same params => same key (safe retries),
-    // changed params => new key (no "idempotent keys" error).
+    // Hash of the request params: same params => same key
+    // changed params => new key
     const paramsHash = crypto
       .createHash("sha256")
       .update(JSON.stringify({ lineItems, currency }))
       .digest("hex")
       .slice(0, 12);
 
-    // NOTE: payment_method_types is intentionally NOT passed.
     // Payment methods are managed from the Stripe Dashboard.
     const session = await stripe.checkout.sessions.create(
       {
@@ -157,8 +156,7 @@ router.post("/checkout-session", authMiddleware, async (req, res) => {
   }
 });
 
-// DEMO payment: simulates a card payment (only when demo mode is on).
-// Card 4000 0000 0000 0002 is declined, any other valid-looking card succeeds.
+// DEMO payment: simulates a card payment
 router.post("/demo-pay", authMiddleware, async (req, res) => {
   try {
     if (!isDemoMode()) {
@@ -265,7 +263,7 @@ router.get("/session-status", authMiddleware, async (req, res) => {
       });
     }
 
-    // Private fields were needed for verification; never send them to the client.
+    // Private fields were needed for verification
     const safeOrder = currentOrder.toObject();
     delete safeOrder.stripeSessionId;
     delete safeOrder.paymentIntentId;

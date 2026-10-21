@@ -25,7 +25,7 @@ const SORT_OPTIONS = {
   price_desc: { price: -1, _id: 1 },
 };
 
-// ---------- helpers ----------
+// helpers
 
 function isNonEmptyString(value) {
   return typeof value === "string" && value.trim().length > 0;
@@ -35,7 +35,7 @@ function isValidId(id) {
   return typeof id === "string" && /^[a-f\d]{24}$/i.test(id);
 }
 
-// Returns a Number, or null when invalid. Accepts numbers or numeric strings.
+// Returns a Number or null when invalid. Accepts numbers or numeric strings.
 function parsePrice(value) {
   let num;
 
@@ -179,10 +179,9 @@ function escapeRegex(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// ---------- routes ----------
+// routes
 
 // GET: List products (public) with pagination, filter, search, sort
-// Query: ?page=1&limit=20&category=Shoes&search=nike&sort=price_asc
 router.get("/", async (req, res) => {
   try {
     const page = parseIntParam(req.query.page, 1, 1, 1000000);

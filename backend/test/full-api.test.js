@@ -1,7 +1,4 @@
-// Full backend API test (vitest). Run:  npm test
-// Needs: server running on localhost:5000, .env with MONGODB_URI + JWT_SECRET.
-// It creates temporary users / products / orders in the DB (names start with
-// "__test_" / "__TEST__") and deletes them all afterwards.
+// Full backend API test
 import "dotenv/config";
 import http from "node:http";
 import { createRequire } from "node:module";
@@ -26,7 +23,7 @@ const address = {
 
 const createdUserIds = [];
 
-// ---------------- helpers ----------------
+// helpers
 
 async function api(method, path, { token, body, headers } = {}) {
   const res = await fetch(BASE + path, {
@@ -97,20 +94,20 @@ async function cleanup() {
   await User.deleteMany({ email: /^__test_/ });
 }
 
-// ---------------- tests ----------------
+// tests
 
 describe("Full backend API", () => {
   let admin;
   let userA;
   let userB;
   let productId;
-  let orderPlain; // qty 2
-  let orderIdem; // qty 1 (idempotency + status flow)
+  let orderPlain; 
+  let orderIdem; 
   const idemKey = `test-key-${Date.now()}-abcdef`;
 
   beforeAll(async () => {
     await mongoose.connect(process.env.MONGODB_URI);
-    await cleanup(); // leftovers from a crashed earlier run
+    await cleanup(); 
 
     admin = await createUser("admin", "admin");
     userA = await createUser("user", "usera");
@@ -122,7 +119,7 @@ describe("Full backend API", () => {
     await mongoose.disconnect();
   }, 30000);
 
-  // ---------- server / security ----------
+  //  server / security 
   describe("Server and security", () => {
     it("health check works", async () => {
       const res = await api("GET", "/api/health");
@@ -168,7 +165,7 @@ describe("Full backend API", () => {
     });
   });
 
-  // ---------- roles ----------
+  //  roles 
   describe("Roles", () => {
     it("admin token reaches an admin route", async () => {
       const res = await api("GET", "/api/orders/admin/all", {
@@ -194,7 +191,7 @@ describe("Full backend API", () => {
     });
   });
 
-  // ---------- products ----------
+  //  products
   describe("Products", () => {
     it("lists products with pagination fields", async () => {
       const res = await api("GET", "/api/products?limit=2");
@@ -313,7 +310,7 @@ describe("Full backend API", () => {
     });
   });
 
-  // ---------- orders ----------
+  // orders
   describe("Orders", () => {
     it("requires a token", async () => {
       const res = await api("GET", "/api/orders");
@@ -553,7 +550,7 @@ describe("Full backend API", () => {
     }, 60000);
   });
 
-  // ---------- delete (last) ----------
+  // delete
   describe("Product delete", () => {
     it("normal user cannot delete, admin can, second delete is 404", async () => {
       expect(

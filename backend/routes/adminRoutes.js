@@ -10,7 +10,7 @@ const router = express.Router();
 // Every route in this file is admin-only
 router.use(authMiddleware, allowRoles("admin"));
 
-// GET: Dashboard statistics (counts, revenue, last 7 days, top products, low stock)
+// GET: Dashboard statistics
 router.get("/stats", async (req, res) => {
   try {
     const since = new Date();

@@ -79,7 +79,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes for faster listing / filtering / search
+// Indexes for faster listing / filtering / searching
 productSchema.index({ category: 1 });
 productSchema.index({ createdAt: -1 });
 productSchema.index({ title: "text", description: "text" });

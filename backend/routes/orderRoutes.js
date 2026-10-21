@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
-// IMPORTANT: match model filename casing on case-sensitive filesystems.
 const Order = require("../models/Order");
 const Product = require("../models/product");
 const authMiddleware = require("../middleware/authMiddleware");
@@ -23,7 +22,7 @@ const ORDER_STATUSES = [
   "cancelled",
 ];
 
-// Allowed status transitions (cancel is handled separately, it restores stock)
+// Allowed status transitions but (cancel is handled separately, it restores stock)
 const TRANSITIONS = {
   pending: ["confirmed", "cancelled"],
   confirmed: ["processing", "cancelled"],
@@ -39,7 +38,7 @@ const ADMIN_CANCELLABLE = ["pending", "confirmed", "processing"];
 // Never send these to API clients
 const SAFE_SELECT = "-stripeSessionId -paymentIntentId -idempotencyKey";
 
-// ---------- helpers ----------
+// helpers
 
 class HttpError extends Error {
   constructor(httpStatus, message) {
@@ -90,8 +89,8 @@ const createOrderLimiter = rateLimit({
   },
 });
 
-// Atomically cancel an order and put the stock back.
-// Returns the cancelled order, or null if it was not cancellable.
+// cancel an order and put the stock back.
+// Returns the cancelled order
 async function cancelOrderAndRestoreStock({ orderId, userId, allowedStatuses }) {
   const session = await mongoose.startSession();
 
@@ -105,7 +104,6 @@ async function cancelOrderAndRestoreStock({ orderId, userId, allowedStatuses }) 
         _id: orderId,
         status: { $in: allowedStatuses },
         paymentStatus: { $ne: "paid" }, // paid orders need a Stripe refund first
-        // Do not cancel while a Stripe Checkout session can still complete payment.
         $or: [
           { paymentProvider: { $ne: "stripe" } },
           { stripeSessionId: { $exists: false } },
@@ -144,9 +142,8 @@ async function cancelOrderAndRestoreStock({ orderId, userId, allowedStatuses }) 
   }
 }
 
-// ---------- routes ----------
 
-// POST: Create an order (price + stock handled on the server)
+// POST: Create an order
 router.post("/", authMiddleware, createOrderLimiter, async (req, res) => {
   const body = req.body || {};
   const { items, shippingAddress, paymentProvider } = body;
@@ -245,7 +242,7 @@ router.post("/", authMiddleware, createOrderLimiter, async (req, res) => {
         );
 
         for (const [productId, quantity] of entries) {
-          // Atomic conditional update: stock can never go below zero
+          // conditional update: stock can never go below zero
           const product = await Product.findOneAndUpdate(
             { _id: productId, stock: { $gte: quantity } },
             { $inc: { stock: -quantity } },
@@ -317,7 +314,7 @@ router.post("/", authMiddleware, createOrderLimiter, async (req, res) => {
       });
     }
 
-    // Two parallel requests with the same idempotency key
+    // Two requests with the same idempotency key
     if (error.code === 11000 && idempotencyKey) {
       const existing = await Order.findOne({
         user: req.user.userId,
@@ -349,7 +346,7 @@ router.post("/", authMiddleware, createOrderLimiter, async (req, res) => {
   }
 });
 
-// GET: Admin - list all orders (pagination + status filter)
+// GET: Admin - list all orders
 // NOTE: must stay above "/:id"
 router.get("/admin/all", authMiddleware, allowRoles("admin"), async (req, res) => {
   try {
@@ -465,7 +462,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// PATCH: User cancels own order (only while "pending" and not paid). Stock is restored.
+// PATCH: User cancels own order
 router.patch("/:id/cancel", authMiddleware, async (req, res) => {
   try {
     if (!isValidId(req.params.id)) {
@@ -512,7 +509,7 @@ router.patch("/:id/cancel", authMiddleware, async (req, res) => {
   }
 });
 
-// PATCH: Admin updates order status (validated transitions only)
+// PATCH: Admin updates order status
 router.patch("/:id/status", authMiddleware, allowRoles("admin"), async (req, res) => {
   try {
     if (!isValidId(req.params.id)) {

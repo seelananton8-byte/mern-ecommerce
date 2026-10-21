@@ -153,11 +153,9 @@ describe("Authentication API", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Extra security tests
-// NOTE: login/register share a strict rate limiter (10 per 15 min).
+// login/register share a strict rate limiter (10 per 15 min).
 // This block adds 4 requests. Restart the server before running if you get 429.
-// ---------------------------------------------------------------------------
 describe("Authentication API security", () => {
   const b64 = (obj) =>
     Buffer.from(JSON.stringify(obj)).toString("base64url");

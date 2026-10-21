@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const MAX_ITEMS_PER_ORDER = 50;
 const MAX_QUANTITY_PER_ITEM = 100;
 
-// Round to 2 decimals on assignment (avoids 59.970000000000006)
+// Round to 2 decimals on assignment
 const round2 = (value) =>
   typeof value === "number" ? Math.round(value * 100) / 100 : value;
 
@@ -40,7 +40,7 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Order tracking timeline (every status change is recorded)
+// Order tracking timeline 
 const historySchema = new mongoose.Schema(
   {
     status: { type: String, required: true },
@@ -100,7 +100,7 @@ const orderSchema = new mongoose.Schema(
       default: "cash_on_delivery",
     },
 
-    // Stripe linkage (set by the server / webhook only, never from req.body)
+    // Stripe linkage
     stripeSessionId: {
       type: String,
       trim: true,
@@ -115,7 +115,7 @@ const orderSchema = new mongoose.Schema(
       type: Date,
     },
 
-    // Client-generated key (e.g. UUID) to stop duplicate orders on double click / retry
+    // Client-generated key
     idempotencyKey: {
       type: String,
       trim: true,
@@ -162,7 +162,7 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ user: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 
-// One order per (user, idempotencyKey)
+// One order
 orderSchema.index(
   { user: 1, idempotencyKey: 1 },
   {
