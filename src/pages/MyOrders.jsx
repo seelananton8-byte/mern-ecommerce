@@ -9,6 +9,26 @@ const formatPrice = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}
 const formatDate = (value) =>
   value ? new Date(value).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "";
 
+
+function OrderSkeleton() {
+  return (
+    <div className="x-orders-skeleton" aria-label="Loading orders">
+      {[1, 2, 3].map((item) => (
+        <div className="x-card x-skeleton-card" key={item}>
+          <div className="x-skeleton x-skeleton-title" />
+          <div className="x-skeleton x-skeleton-short" />
+          <div className="x-skeleton x-skeleton-line" />
+          <div className="x-skeleton x-skeleton-line" />
+          <div className="x-skeleton-footer">
+            <div className="x-skeleton x-skeleton-total" />
+            <div className="x-skeleton x-skeleton-button" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function MyOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -73,7 +93,7 @@ export default function MyOrders() {
 
       {banner && <div className="x-banner" role="status">{banner}</div>}
       {error && <div className="x-msg" role="alert">{error}</div>}
-      {loading && <p className="x-empty">Loading your orders...</p>}
+      {loading && <OrderSkeleton />}
 
       {!loading && orders.length === 0 && (
         <div className="x-card">
@@ -82,6 +102,7 @@ export default function MyOrders() {
         </div>
       )}
 
+    {!loading && (
       <div className="x-orders">
         {orders.map((order) => {
           const history = order.statusHistory?.length
@@ -146,6 +167,7 @@ export default function MyOrders() {
           );
         })}
       </div>
+    )}
     </main>
   );
 }
