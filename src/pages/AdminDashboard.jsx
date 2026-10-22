@@ -32,9 +32,53 @@ const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delive
 
 const EMPTY_PRODUCT = { title: "", description: "", price: "", category: "", image: "", stock: "" };
 
+function DashboardSkeleton() {
+  return (
+    <div className="x-grid x-grid-4" aria-label="Loading dashboard" role="status">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div className="x-card x-stat" key={i}>
+          <div className="x-skeleton x-skeleton-label" />
+          <div className="x-skeleton x-skeleton-value" />
+        </div>
+      ))}
+      <span className="x-skeleton-sr">Loading dashboard...</span>
+    </div>
+  );
+}
+
+function TableSkeleton({ columns = 6, rows = 5 }) {
+  return (
+    <div className="x-table-wrap" role="status" aria-label="Loading table">
+      <table className="x-table">
+        <thead>
+          <tr>
+            {Array.from({ length: columns }).map((_, i) => (
+              <th key={i}>
+                <div className="x-skeleton x-skeleton-heading" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, row) => (
+            <tr key={row}>
+              {Array.from({ length: columns }).map((_, col) => (
+                <td key={col}>
+                  <div className="x-skeleton x-skeleton-cell" />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <span className="x-skeleton-sr">Loading data...</span>
+    </div>
+  );
+}
+
 /* Overview */
 function Overview({ stats }) {
-  if (!stats) return <p className="x-empty">Loading statistics...</p>;
+  if (!stats) return <DashboardSkeleton />;
 
   const maxRevenue = Math.max(1, ...stats.last7Days.map((d) => d.revenue));
 
@@ -111,6 +155,7 @@ function OrdersTab({ refreshKey, toast }) {
   const [busyId, setBusyId] = useState("");
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       const data = await getAdminOrders(filter);
       setOrders(data.orders || []);
@@ -145,7 +190,7 @@ function OrdersTab({ refreshKey, toast }) {
         </select>
       </div>
 
-      {loading ? <p className="x-empty">Loading orders...</p> : (
+      {loading ? <TableSkeleton columns={7} rows={5} /> : (
         <div className="x-table-wrap">
           <table className="x-table">
             <thead>
@@ -196,15 +241,19 @@ function OrdersTab({ refreshKey, toast }) {
 /* Products */
 function ProductsTab({ refreshKey, toast }) {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(EMPTY_PRODUCT);
   const [editingId, setEditingId] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
+    setLoading(true);
     try {
       setProducts(await getProducts());
     } catch (err) {
       toast(err.message, "err");
+    } finally {
+      setLoading(false);
     }
   }, [toast]);
 
@@ -263,6 +312,9 @@ function ProductsTab({ refreshKey, toast }) {
         </div>
       </form>
 
+    {loading ? (
+      <TableSkeleton columns={6} rows={5} />
+    ) : (
       <div className="x-table-wrap">
         <table className="x-table">
           <thead><tr><th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
@@ -286,6 +338,7 @@ function ProductsTab({ refreshKey, toast }) {
           </tbody>
         </table>
       </div>
+    )}
     </>
   );
 }
@@ -293,23 +346,67 @@ function ProductsTab({ refreshKey, toast }) {
 /* Users */
 function UsersTab({ toast }) {
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getAdminUsers().then((d) => setUsers(d.users || [])).catch((e) => toast(e.message, "err"));
+    let active = true;
+
+    getAdminUsers()
+      .then((d) => {
+        if (active) setUsers(d.users || []);
+      })
+      .catch((e) => {
+        if (active) toast(e.message, "err");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [toast]);
+
+  if (loading) {
+    return <TableSkeleton columns={4} rows={5} />;
+  }
 
   return (
     <div className="x-table-wrap">
       <table className="x-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
         <tbody>
-          {users.map((u) => (
-            <tr key={u._id}>
-              <td>{u.name}</td><td>{u.email}</td>
-              <td><span className={`x-badge ${u.role === "admin" ? "processing" : ""}`}>{u.role}</span></td>
-              <td>{formatDate(u.createdAt)}</td>
+          {users.length === 0 ? (
+            <tr>
+              <td colSpan={4} className="x-empty">
+                No users found.
+              </td>
             </tr>
-          ))}
+          ) : (
+            users.map((u) => (
+              <tr key={u._id}>
+                <td>{u.name}</td>
+                <td>{u.email}</td>
+                <td>
+                  <span
+                    className={`x-badge ${
+                      u.role === "admin" ? "processing" : ""
+                    }`}
+                  >
+                    {u.role}
+                  </span>
+                </td>
+                <td>{formatDate(u.createdAt)}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
