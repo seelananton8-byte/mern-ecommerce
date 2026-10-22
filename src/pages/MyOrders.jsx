@@ -65,6 +65,7 @@ export default function MyOrders() {
   }, [load, navigate]);
 
   const handleCancel = async (id) => {
+    if (!window.confirm("Cancel this order?")) return;
     setBusyId(id);
     try {
       await cancelOrder(id);
@@ -95,7 +96,7 @@ export default function MyOrders() {
       {error && <div className="x-msg" role="alert">{error}</div>}
       {loading && <OrderSkeleton />}
 
-      {!loading && orders.length === 0 && (
+        {!loading && !error && orders.length === 0 && (
         <div className="x-card">
           <p className="x-empty">You have not placed any orders yet.</p>
           <p><Link to="/products" className="x-btn">Start shopping</Link></p>

@@ -190,7 +190,7 @@ function OrdersTab({ refreshKey, toast }) {
         </select>
       </div>
 
-      {loading ? <TableSkeleton columns={7} rows={5} /> : (
+      {loading && orders.length === 0 ? <TableSkeleton columns={7} rows={5} /> : (
         <div className="x-table-wrap">
           <table className="x-table">
             <thead>
@@ -312,7 +312,7 @@ function ProductsTab({ refreshKey, toast }) {
         </div>
       </form>
 
-    {loading ? (
+    {loading && products.length === 0 ? (
       <TableSkeleton columns={6} rows={5} />
     ) : (
       <div className="x-table-wrap">
