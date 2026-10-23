@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from "../services/api";
 import "../styles/auth.css";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -22,7 +20,7 @@ export default function ForgotPassword() {
 
     try {
       const response = await fetch(
-        `${API_URL}/auth/forgot-password`,
+        `${API_BASE_URL}/auth/forgot-password`,
         {
           method: "POST",
           headers: {

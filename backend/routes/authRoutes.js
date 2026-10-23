@@ -1,3 +1,4 @@
+
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -17,7 +18,6 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const MAX_PASSWORD_BYTES = 72;
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing", 12);
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const PASSWORD_RESET_EXPIRY_MS = 15 * 60 * 1000;
 
 // HELPERS
@@ -60,6 +60,10 @@ function createMailTransporter() {
   });
 }
 
+// PASSWORD RESET EMAIL
+// Uses Brevo HTTPS API when configured.
+// Falls back to the existing SMTP transport otherwise.
+
 async function sendPasswordResetEmail(email, token) {
   const frontendOrigin =
     process.env.CLIENT_ORIGIN ||
@@ -70,41 +74,94 @@ async function sendPasswordResetEmail(email, token) {
   }
 
   const baseUrl = frontendOrigin.replace(/\/+$/, "");
-  const resetUrl =
-    `${baseUrl}/reset-password/${encodeURIComponent(token)}`;
+  const resetUrl = `${baseUrl}/reset-password/${encodeURIComponent(token)}`;
 
+  const subject = "Reset your ShopSphere password";
+
+  const textContent = [
+    "We received a request to reset your ShopSphere password.",
+    "",
+    `Open this link to choose a new password: ${resetUrl}`,
+    "",
+    "This link expires in 15 minutes and can only be used once.",
+    "If you did not request this, you can ignore this email.",
+  ].join("\n");
+
+  const htmlContent = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f172a">
+      <h2>Reset your ShopSphere password</h2>
+      <p>We received a request to reset your password.</p>
+      <p>
+        <a
+          href="${resetUrl}"
+          style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px"
+        >
+          Reset password
+        </a>
+      </p>
+      <p>This link expires in 15 minutes and can only be used once.</p>
+      <p>If you did not request this, you can ignore this email.</p>
+    </div>
+  `;
+
+  // Brevo API: preferred when BREVO_API_KEY is configured.
+  if (process.env.BREVO_API_KEY) {
+    const senderEmail = process.env.BREVO_SENDER_EMAIL;
+
+    if (!senderEmail) {
+      throw new Error("BREVO_SENDER_EMAIL is not configured.");
+    }
+
+    const response = await fetch(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "api-key": process.env.BREVO_API_KEY,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: {
+            name: "ShopSphere",
+            email: senderEmail,
+          },
+          to: [{ email }],
+          subject,
+          textContent,
+          htmlContent,
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
+
+    if (!response.ok) {
+      const errorDetails = await response.text();
+
+      console.error(
+        "Brevo API error:",
+        response.status,
+        errorDetails
+      );
+
+      throw new Error(
+        `Brevo email request failed (${response.status}).`
+      );
+    }
+
+    console.log("Password reset email accepted by Brevo.");
+    return;
+  }
+
+  // Existing SMTP fallback when Brevo is not configured.
   const transporter = createMailTransporter();
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
-    subject: "Reset your ShopSphere password",
-
-    text: [
-      "We received a request to reset your ShopSphere password.",
-      "",
-      `Open this link to choose a new password: ${resetUrl}`,
-      "",
-      "This link expires in 15 minutes and can only be used once.",
-      "If you did not request this, you can ignore this email.",
-    ].join("\n"),
-
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:24px;color:#0f172a">
-        <h2>Reset your ShopSphere password</h2>
-        <p>We received a request to reset your password.</p>
-        <p>
-          <a
-            href="${resetUrl}"
-            style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:8px"
-          >
-            Reset password
-          </a>
-        </p>
-        <p>This link expires in 15 minutes and can only be used once.</p>
-        <p>If you did not request this, you can ignore this email.</p>
-      </div>
-    `,
+    subject,
+    text: textContent,
+    html: htmlContent,
   });
 }
 
@@ -181,7 +238,6 @@ router.post("/register", async (req, res) => {
       },
     });
   } catch (error) {
-    // MongoDB  email index protection.
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
@@ -224,7 +280,6 @@ router.post("/login", async (req, res) => {
       email: normalizedEmail,
     }).select("+password");
 
-    // Compare against a dummy hash when the account does not exist.
     const passwordMatches = await bcrypt.compare(
       password,
       user ? user.password : DUMMY_HASH
@@ -324,7 +379,6 @@ router.post("/google", async (req, res) => {
         email: normalizedEmail,
       });
 
-      // to a Google account.
       if (emailUser) {
         return res.status(409).json({
           success: false,
@@ -347,7 +401,6 @@ router.post("/google", async (req, res) => {
           googleId: payload.sub,
         });
       } catch (createError) {
-        // Handle a simultaneous request creating the same account.
         if (createError.code === 11000) {
           user = await User.findOne({
             googleId: payload.sub,
@@ -431,7 +484,7 @@ router.post("/forgot-password", async (req, res) => {
       email: normalizedEmail,
     });
 
-    // Avoid revealing whether an email is registered.
+    // Do not reveal whether an account exists.
     if (!user) {
       return res.status(200).json({
         success: true,
@@ -439,7 +492,6 @@ router.post("/forgot-password", async (req, res) => {
       });
     }
 
-    // Generate a random token
     const rawToken = crypto.randomBytes(32).toString("hex");
 
     user.passwordResetToken = crypto
@@ -461,7 +513,7 @@ router.post("/forgot-password", async (req, res) => {
         mailError.message
       );
 
-      // cleanup if email delivery fails
+      // Clear reset token if email delivery fails.
       try {
         user.passwordResetToken = null;
         user.passwordResetExpires = null;
