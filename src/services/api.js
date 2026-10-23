@@ -1,21 +1,38 @@
-// Set VITE_API_URL to the backend origin, with or without its /api suffix.
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
-const backendOrigin = (configuredApiUrl || "http://localhost:5000/api")
+
+// Supports:
+// VITE_API_URL=http://localhost:5000
+// VITE_API_URL=http://localhost:5000/api
+// VITE_API_URL=https://your-backend-domain.com
+// VITE_API_URL=https://your-backend-domain.com/api
+
+const backendOrigin = (
+  configuredApiUrl || "http://localhost:5000"
+)
   .replace(/\/+$/, "")
   .replace(/\/api$/i, "");
+
 export const API_BASE_URL = `${backendOrigin}/api`;
 
-// Socket.io lives on the same host, without the "/api" suffix
+// Socket.io uses the backend origin without "/api".
 export const SOCKET_URL =
-  import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+  import.meta.env.VITE_SOCKET_URL?.trim() ||
+  backendOrigin;
 
 export function getToken() {
-  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+  return (
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token") ||
+    ""
+  );
 }
 
 export function getStoredUser() {
   try {
-    const raw = localStorage.getItem("user") || sessionStorage.getItem("user");
+    const raw =
+      localStorage.getItem("user") ||
+      sessionStorage.getItem("user");
+
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -25,14 +42,23 @@ export function getStoredUser() {
 export async function apiRequest(endpoint, options = {}) {
   const token = getToken();
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  const normalizedEndpoint = endpoint.startsWith("/")
+    ? endpoint
+    : `/${endpoint}`;
+
+  const response = await fetch(
+    `${API_BASE_URL}${normalizedEndpoint}`,
+    {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token
+          ? { Authorization: `Bearer ${token}` }
+          : {}),
+        ...options.headers,
+      },
+    }
+  );
 
   if (!response.ok) {
     let message = `API request failed: ${response.status}`;
@@ -41,7 +67,7 @@ export async function apiRequest(endpoint, options = {}) {
       const errorData = await response.json();
       message = errorData.message || message;
     } catch {
-      // Keep the default error message if no JSON response exists.
+      // Keep the default error message if the response is not JSON.
     }
 
     throw new Error(message);
@@ -58,14 +84,23 @@ export async function apiRequest(endpoint, options = {}) {
 export async function backendRequest(endpoint, options = {}) {
   const token = getToken();
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  const normalizedEndpoint = endpoint.startsWith("/")
+    ? endpoint
+    : `/${endpoint}`;
+
+  const response = await fetch(
+    `${API_BASE_URL}${normalizedEndpoint}`,
+    {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token
+          ? { Authorization: `Bearer ${token}` }
+          : {}),
+        ...options.headers,
+      },
+    }
+  );
 
   if (!response.ok) {
     let message = `API request failed: ${response.status}`;
@@ -74,7 +109,7 @@ export async function backendRequest(endpoint, options = {}) {
       const errorData = await response.json();
       message = errorData.message || message;
     } catch {
-      // Keep the default error message if no JSON response exists.
+      // Keep the default error message if the response is not JSON.
     }
 
     throw new Error(message);

@@ -1,9 +1,8 @@
+
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { API_BASE_URL } from "../services/api";
 import "../styles/auth.css";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -21,6 +20,11 @@ export default function ResetPassword() {
     if (loading) return;
 
     setError("");
+
+    if (!token) {
+      setError("Reset link is invalid. Please request a new link.");
+      return;
+    }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -41,7 +45,7 @@ export default function ResetPassword() {
 
     try {
       const response = await fetch(
-        `${API_URL}/auth/reset-password/${encodeURIComponent(token || "")}`,
+        `${API_BASE_URL}/auth/reset-password/${encodeURIComponent(token)}`,
         {
           method: "POST",
           headers: {
@@ -65,7 +69,7 @@ export default function ResetPassword() {
     } catch (err) {
       setError(
         err instanceof TypeError
-          ? "Cannot connect to the server. Please try again later."
+          ? "Cannot connect to the server. Please check your connection and try again."
           : err.message || "Unable to reset your password."
       );
     } finally {
