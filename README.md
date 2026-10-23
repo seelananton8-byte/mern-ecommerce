@@ -38,7 +38,7 @@ To try a payment use the Stripe test card `4242 4242 4242 4242` with any future 
 - Payments: Stripe Checkout + webhooks
 - Real time: Socket.io
 - Auth: JWT, bcrypt, Google Sign-In
-- Email: Nodemailer
+- Email: Brevo API on the live site, Nodemailer (SMTP) on my computer
 - Tests: Vitest
 - Hosting: Vercel (frontend), Render (backend)
 
@@ -126,7 +126,11 @@ SMTP_SECURE
 SMTP_USER
 SMTP_PASS
 SMTP_FROM
+BREVO_API_KEY         (live site: sends the reset email)
+BREVO_SENDER_EMAIL    (a sender email verified in Brevo)
 ```
+
+On my computer the reset email goes through SMTP (the `SMTP_` values). Render's free plan blocks SMTP ports, so on the live site I set `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` and the email is sent through Brevo's HTTPS API instead.
 
 Frontend (`.env`):
 
@@ -157,3 +161,4 @@ The tests make some temporary users, products and orders (names start with `__te
 - In the Stripe dashboard I added a webhook to `https://<backend-url>/api/webhooks/stripe` for `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed` and `checkout.session.expired`.
 - In Google Cloud Console I added the Vercel URL to the authorized JavaScript origins.
 - In MongoDB Atlas I allowed network access for Render.
+- In Brevo I verified a sender email and created an API key, then added `BREVO_API_KEY` and `BREVO_SENDER_EMAIL` on Render (needed for the forgot password email, because Render's free plan blocks SMTP).
