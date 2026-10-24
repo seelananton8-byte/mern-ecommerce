@@ -1,6 +1,7 @@
 const express = require("express");
 const Product = require("../models/product");
 const Review = require("../models/Review");
+const Wishlist = require("../models/Wishlist");
 const authMiddleware = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
 
@@ -388,11 +389,15 @@ router.delete("/:id", authMiddleware, allowRoles("admin"), async (req, res) => {
       });
     }
 
-    // Remove the reviews of the deleted product
+    // Remove the reviews and wishlist entries of the deleted product
     try {
       await Review.deleteMany({ product: product._id });
+      await Wishlist.updateMany(
+        { products: product._id },
+        { $pull: { products: product._id } }
+      );
     } catch (error) {
-      console.error("Delete product reviews error:", error.message);
+      console.error("Delete product related data error:", error.message);
     }
 
     return res.status(200).json({

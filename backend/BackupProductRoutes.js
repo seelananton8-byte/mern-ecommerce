@@ -1,5 +1,6 @@
 const express = require("express");
 const Product = require("../models/product");
+const Review = require("../models/Review");
 const authMiddleware = require("../middleware/authMiddleware");
 const allowRoles = require("../middleware/roleMiddleware");
 
@@ -385,6 +386,13 @@ router.delete("/:id", authMiddleware, allowRoles("admin"), async (req, res) => {
         success: false,
         message: "Product not found.",
       });
+    }
+
+    // Remove the reviews of the deleted product
+    try {
+      await Review.deleteMany({ product: product._id });
+    } catch (error) {
+      console.error("Delete product reviews error:", error.message);
     }
 
     return res.status(200).json({

@@ -15,6 +15,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const webhookRoutes = require("./routes/webhookRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
 const { initSocket } = require("./socket");
 
 const app = express();
@@ -98,6 +99,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "E-commerce backend is running!" });
