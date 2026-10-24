@@ -314,3 +314,108 @@
     transition: none;
   }
 }
+
+
+/* Log in prompt (shown when the visitor is not logged in) */
+
+.review-login {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 650px;
+  margin-bottom: 36px;
+  padding: 20px 24px;
+  box-sizing: border-box;
+  border: 1px solid #fecdd3;
+  border-radius: 14px;
+  background: #fff1f2;
+}
+
+.review-login-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+.review-login-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.review-login-text h3 {
+  margin: 0 0 4px;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.review-login-text p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.review-login-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.review-login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 20px;
+  border: 1px solid #e11d48;
+  border-radius: 10px;
+  background: #e11d48;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.review-login-btn:hover {
+  background: #be123c;
+  border-color: #be123c;
+}
+
+.review-login-btn.ghost {
+  background: #ffffff;
+  color: #e11d48;
+}
+
+.review-login-btn.ghost:hover {
+  background: #ffe4e6;
+  border-color: #e11d48;
+}
+
+.review-login-btn:focus-visible {
+  outline: 3px solid rgb(225 29 72 / 25%);
+  outline-offset: 2px;
+}
+
+@media (max-width: 560px) {
+  .review-login {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .review-login-actions {
+    width: 100%;
+  }
+
+  .review-login-btn {
+    flex: 1;
+  }
+}

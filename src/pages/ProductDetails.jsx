@@ -627,14 +627,40 @@ export default function ProductDetails() {
             )}
           </form>
         ) : (
-          <div className="review-form">
-            <p>
-              Please{" "}
-              <Link to="/login" state={{ from: `/products/${id}` }}>
-                log in
-              </Link>{" "}
-              to write a review.
-            </p>
+          <div className="review-login">
+            <span className="review-login-icon" aria-hidden="true">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="4" y="11" width="16" height="9" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+            </span>
+
+            <div className="review-login-text">
+              <h3>Want to share your experience?</h3>
+              <p>Log in to rate and review this product.</p>
+            </div>
+
+            <div className="review-login-actions">
+              <Link
+                className="review-login-btn"
+                to="/login"
+                state={{ from: `/products/${id}` }}
+              >
+                Log in
+              </Link>
+              <Link className="review-login-btn ghost" to="/register">
+                Create account
+              </Link>
+            </div>
           </div>
         )}
 
