@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getProductById } from "../services/productService";
+import { getToken } from "../services/api";
+import {
+  deleteReview,
+  getMyReview,
+  getReviews,
+  saveReview,
+} from "../services/reviewService";
 import { useCart } from "../context/CardContext.jsx";
 import "../styles/product-details.css";
 import "../styles/product-reviews.css";
@@ -91,21 +98,7 @@ const AlertIcon = () => (
 const formatPrice = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
 
-/* Review storage helpers */
-
-const loadProductReviews = (productId) => {
-  if (!productId) return [];
-
-  try {
-    const saved = localStorage.getItem(`product-reviews-${productId}`);
-    const parsed = saved ? JSON.parse(saved) : [];
-
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error("Unable to load reviews:", error);
-    return [];
-  }
-};
+const EMPTY_SUMMARY = { average: 0, count: 0, distribution: {} };
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -119,36 +112,65 @@ export default function ProductDetails() {
   const [activeImage, setActiveImage] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
   const [added, setAdded] = useState(false);
-  const [reviews, setReviews] = useState(() => loadProductReviews(id));
-  const [reviewName, setReviewName] = useState("");
+  const [reviews, setReviews] = useState([]);
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewPages, setReviewPages] = useState(1);
+  const [myReview, setMyReview] = useState(null);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
   const addedTimer = useRef(null);
-  const reviewStorageKey = `product-reviews-${id}`;
-  const loadedReviewKey = useRef(reviewStorageKey);
+  const loggedIn = Boolean(getToken());
 
-  // Load the correct reviews when navigating to another product.
+  // Load the reviews (and my own review when logged in) for this product.
   useEffect(() => {
-    loadedReviewKey.current = reviewStorageKey;
-    setReviews(loadProductReviews(id));
-    setReviewMessage("");
-    setReviewName("");
-    setReviewText("");
-    setReviewRating(5);
-  }, [id, reviewStorageKey]);
+    let ignore = false;
 
-  // Save reviews only after the current product's reviews are loaded.
-  useEffect(() => {
-    if (loadedReviewKey.current !== reviewStorageKey) return;
+    async function loadReviews() {
+      setReviews([]);
+      setSummary(EMPTY_SUMMARY);
+      setReviewPage(1);
+      setReviewPages(1);
+      setMyReview(null);
+      setReviewText("");
+      setReviewRating(5);
+      setReviewMessage("");
 
-    try {
-      localStorage.setItem(reviewStorageKey, JSON.stringify(reviews));
-    } catch (error) {
-      console.error("Unable to save reviews:", error);
-      setReviewMessage("Could not save the review in this browser.");
+      try {
+        const data = await getReviews(id, 1);
+
+        if (!ignore) {
+          setReviews(data.reviews || []);
+          setSummary(data.summary || EMPTY_SUMMARY);
+          setReviewPages(data.pages || 1);
+        }
+      } catch (error) {
+        console.error("Unable to load reviews:", error);
+      }
+
+      if (!getToken()) return;
+
+      try {
+        const data = await getMyReview(id);
+
+        if (!ignore && data.review) {
+          setMyReview(data.review);
+          setReviewRating(data.review.rating);
+          setReviewText(data.review.comment);
+        }
+      } catch (error) {
+        console.error("Unable to load your review:", error);
+      }
     }
-  }, [reviews, reviewStorageKey]);
+
+    loadReviews();
+
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   // Load product details.
   useEffect(() => {
@@ -194,46 +216,78 @@ export default function ProductDetails() {
     return () => clearTimeout(addedTimer.current);
   }, []);
 
-  const handleReviewSubmit = (event) => {
+  const refreshReviews = async () => {
+    const data = await getReviews(id, 1);
+
+    setReviews(data.reviews || []);
+    setSummary(data.summary || EMPTY_SUMMARY);
+    setReviewPage(1);
+    setReviewPages(data.pages || 1);
+  };
+
+  const handleReviewSubmit = async (event) => {
     event.preventDefault();
 
-    const name = reviewName.trim();
     const text = reviewText.trim();
 
-    if (!name || !text) {
-      setReviewMessage("Please enter your name and review.");
+    if (text.length < 3) {
+      setReviewMessage("Please write at least 3 characters.");
       return;
     }
 
-    const newReview = {
-      id: `${Date.now()}-${Math.random()}`,
-      name,
-      text,
-      rating: reviewRating,
-      date: new Date().toLocaleDateString("en-IN"),
-    };
+    setReviewBusy(true);
+    setReviewMessage("");
 
-    // Save immediately, then update the displayed reviews.
     try {
-      const saved = localStorage.getItem(reviewStorageKey);
-      const parsed = saved ? JSON.parse(saved) : [];
-      const existingReviews = Array.isArray(parsed) ? parsed : [];
-      const updatedReviews = [newReview, ...existingReviews];
+      const data = await saveReview(id, {
+        rating: reviewRating,
+        comment: text,
+      });
 
-      localStorage.setItem(
-        reviewStorageKey,
-        JSON.stringify(updatedReviews)
+      setMyReview(data.review);
+      setReviewMessage(data.message || "Your review was saved.");
+      await refreshReviews();
+    } catch (error) {
+      setReviewMessage(
+        error.message || "Unable to save your review. Please try again."
       );
+    } finally {
+      setReviewBusy(false);
+    }
+  };
 
-      loadedReviewKey.current = reviewStorageKey;
-      setReviews(updatedReviews);
-      setReviewName("");
+  const handleReviewDelete = async () => {
+    if (!myReview || !window.confirm("Delete your review?")) return;
+
+    setReviewBusy(true);
+    setReviewMessage("");
+
+    try {
+      await deleteReview(id, myReview.id);
+
+      setMyReview(null);
       setReviewText("");
       setReviewRating(5);
-      setReviewMessage("Your review was added successfully.");
+      setReviewMessage("Your review was deleted.");
+      await refreshReviews();
     } catch (error) {
-      console.error("Unable to save review:", error);
-      setReviewMessage("Unable to save your review. Please try again.");
+      setReviewMessage(error.message || "Unable to delete your review.");
+    } finally {
+      setReviewBusy(false);
+    }
+  };
+
+  const loadMoreReviews = async () => {
+    const next = reviewPage + 1;
+
+    try {
+      const data = await getReviews(id, next);
+
+      setReviews((current) => [...current, ...(data.reviews || [])]);
+      setReviewPage(next);
+      setReviewPages(data.pages || next);
+    } catch (error) {
+      setReviewMessage(error.message || "Unable to load more reviews.");
     }
   };
 
@@ -305,12 +359,6 @@ export default function ProductDetails() {
         : [];
 
   const currentImage = images[activeImage] || product.thumbnail;
-
-  const averageRating =
-  reviews.length > 0
-    ? reviews.reduce((total, review) => total + Number(review.rating), 0) /
-      reviews.length
-    : Number(product.rating) || 4.5;
 
   const increaseQuantity = () => {
     if (quantity < stock) {
@@ -386,14 +434,16 @@ export default function ProductDetails() {
               <StarIcon />
             </span>
 
-            <strong>{averageRating.toFixed(1)}</strong>
+            <strong>
+              {summary.count > 0 ? summary.average.toFixed(1) : "New"}
+            </strong>
 
             <span>
-              {reviews.length > 0
-                ? `${reviews.length} customer ${
-                    reviews.length === 1 ? "review" : "reviews"
+              {summary.count > 0
+                ? `${summary.count} customer ${
+                    summary.count === 1 ? "review" : "reviews"
                   }`
-                : "Customer rating"}
+                : "No ratings yet"}
             </span>
           </div>
 
@@ -508,59 +558,85 @@ export default function ProductDetails() {
           </div>
 
           <div className="reviews-summary">
-            <strong>{reviews.length}</strong>
-            <span>{reviews.length === 1 ? "Review" : "Reviews"}</span>
+            <strong>{summary.count}</strong>
+            <span>{summary.count === 1 ? "Review" : "Reviews"}</span>
           </div>
         </div>
 
-        <form className="review-form" onSubmit={handleReviewSubmit}>
-          <label htmlFor="review-name">Your name</label>
-          <input
-            id="review-name"
-            type="text"
-            value={reviewName}
-            onChange={(event) => setReviewName(event.target.value)}
-            placeholder="Enter your name"
-            maxLength={60}
-            required
-          />
+        {loggedIn ? (
+          <form className="review-form" onSubmit={handleReviewSubmit}>
+            <label htmlFor="review-rating">Your rating</label>
+            <select
+              id="review-rating"
+              value={reviewRating}
+              onChange={(event) =>
+                setReviewRating(Number(event.target.value))
+              }
+            >
+              <option value={5}>★★★★★ — Excellent</option>
+              <option value={4}>★★★★ — Very good</option>
+              <option value={3}>★★★ — Good</option>
+              <option value={2}>★★ — Fair</option>
+              <option value={1}>★ — Poor</option>
+            </select>
 
-          <label htmlFor="review-rating">Your rating</label>
-          <select
-            id="review-rating"
-            value={reviewRating}
-            onChange={(event) =>
-              setReviewRating(Number(event.target.value))
-            }
-          >
-            <option value={5}>★★★★★ — Excellent</option>
-            <option value={4}>★★★★ — Very good</option>
-            <option value={3}>★★★ — Good</option>
-            <option value={2}>★★ — Fair</option>
-            <option value={1}>★ — Poor</option>
-          </select>
+            <label htmlFor="review-text">Your review</label>
+            <textarea
+              id="review-text"
+              value={reviewText}
+              onChange={(event) => setReviewText(event.target.value)}
+              placeholder="Write your product review"
+              rows={4}
+              maxLength={1000}
+              required
+            />
 
-          <label htmlFor="review-text">Your review</label>
-          <textarea
-            id="review-text"
-            value={reviewText}
-            onChange={(event) => setReviewText(event.target.value)}
-            placeholder="Write your product review"
-            rows={4}
-            maxLength={1000}
-            required
-          />
+            <button
+              type="submit"
+              className="submit-review-btn"
+              disabled={reviewBusy}
+            >
+              {reviewBusy
+                ? "Saving..."
+                : myReview
+                  ? "Update review"
+                  : "Submit review"}
+            </button>
 
-          <button type="submit" className="submit-review-btn">
-            Submit review
-          </button>
+            {myReview && (
+              <button
+                type="button"
+                className="submit-review-btn"
+                style={{
+                  marginLeft: 8,
+                  background: "#fff",
+                  color: "#dc2626",
+                  border: "1px solid #fecaca",
+                }}
+                onClick={handleReviewDelete}
+                disabled={reviewBusy}
+              >
+                Delete my review
+              </button>
+            )}
 
-          {reviewMessage && (
-            <p className="review-message" role="status">
-              {reviewMessage}
+            {reviewMessage && (
+              <p className="review-message" role="status">
+                {reviewMessage}
+              </p>
+            )}
+          </form>
+        ) : (
+          <div className="review-form">
+            <p>
+              Please{" "}
+              <Link to="/login" state={{ from: `/products/${id}` }}>
+                log in
+              </Link>{" "}
+              to write a review.
             </p>
-          )}
-        </form>
+          </div>
+        )}
 
         <div className="reviews-list">
           {reviews.length === 0 ? (
@@ -572,7 +648,9 @@ export default function ProductDetails() {
               <article className="review-card" key={review.id}>
                 <div className="review-card-header">
                   <strong>{review.name}</strong>
-                  <time>{review.date}</time>
+                  <time>
+                    {new Date(review.createdAt).toLocaleDateString("en-IN")}
+                  </time>
                 </div>
 
                 <div
@@ -583,11 +661,27 @@ export default function ProductDetails() {
                   <span>{"★".repeat(5 - review.rating)}</span>
                 </div>
 
-                <p>{review.text}</p>
+                <p>{review.comment}</p>
+
+                {review.verifiedPurchase && (
+                  <small style={{ color: "#16a34a", fontWeight: 600 }}>
+                    Verified purchase
+                  </small>
+                )}
               </article>
             ))
           )}
         </div>
+
+        {reviewPage < reviewPages && (
+          <button
+            type="button"
+            className="submit-review-btn"
+            onClick={loadMoreReviews}
+          >
+            Load more reviews
+          </button>
+        )}
       </section>
     </main>
   );

@@ -14,6 +14,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const webhookRoutes = require("./routes/webhookRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 const { initSocket } = require("./socket");
 
 const app = express();
@@ -94,6 +95,7 @@ app.use("/api/auth/reset-password", passwordResetLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/products/:productId/reviews", reviewRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
 
