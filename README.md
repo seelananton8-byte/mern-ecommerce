@@ -15,7 +15,9 @@ To try a payment use the Stripe test card `4242 4242 4242 4242` with any future 
 - Register and login with email and password, or with Google
 - Forgot password / reset password through an email link
 - Browse products, filter by category, search and sort
-- Cart and wishlist
+- Cart (saved in the browser)
+- Wishlist saved in my account in MongoDB, so it is the same on every device. Guests can use it too, and it is merged into the account when they log in
+- Ratings and reviews on every product: one review per user, average rating, and a Verified purchase badge for people who ordered the product
 - Checkout with Stripe or Cash on Delivery
 - My Orders page where the status updates live without refreshing (Socket.io)
 - Cancel your own order while it is still pending (stock goes back automatically)
@@ -29,6 +31,7 @@ To try a payment use the Stripe test card `4242 4242 4242 4242` with any future 
 - An idempotency key is sent with every order so a double click does not create two orders.
 - Passwords are hashed with bcrypt, JWT expires in 1 hour, and admin routes are checked on the server by role.
 - Login and register are rate limited, and the API uses helmet, CORS and input sanitizing.
+- Review and wishlist requests are validated on the server and limited per user.
 
 ## Tech used
 
@@ -47,8 +50,8 @@ To try a payment use the Stripe test card `4242 4242 4242 4242` with any future 
 ```
 backend/
   middleware/     auth + role checks
-  models/         User, Product, Order
-  routes/         auth, products, orders, payments, webhooks, admin
+  models/         User, Product, Order, Review, Wishlist
+  routes/         auth, products, reviews, wishlist, orders, payments, webhooks, admin
   services/       payment logic
   scripts/        seedProducts.js, makeAdmin.js
   test/           API tests
@@ -144,7 +147,7 @@ The `VITE_` values are read when the site is built, so after changing them on Ve
 
 ## Tests
 
-There are 74 tests. They call the running API, so start the server first and run the tests in another terminal:
+There are 96 tests. They call the running API, so start the server first and run the tests in another terminal:
 
 ```
 cd backend
@@ -152,7 +155,7 @@ npm start
 npm test
 ```
 
-The tests make some temporary users, products and orders (names start with `__test_` or `__TEST__`) and delete them at the end. Login and register are limited to 10 requests per 15 minutes, so if you run the tests twice quickly you may get a 429. Restart the server and run again.
+The tests make some temporary users, products and orders (names start with `__test_`, `__TEST__`, `__rvtest_` or `__wltest_`) and delete them at the end. Login and register are limited to 10 requests per 15 minutes, so if you run the tests twice quickly you may get a 429. Restart the server and run again.
 
 ## Deployment
 
