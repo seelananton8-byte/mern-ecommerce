@@ -1,10 +1,5 @@
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
 
-// Supports:
-// VITE_API_URL=http://localhost:5000
-// VITE_API_URL=http://localhost:5000/api
-// VITE_API_URL=https://your-backend-domain.com
-// VITE_API_URL=https://your-backend-domain.com/api
 
 const backendOrigin = (
   configuredApiUrl || "http://localhost:5000"

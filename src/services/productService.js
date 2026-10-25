@@ -1,7 +1,7 @@
 import { backendRequest } from "./api";
 
-/* The backend returns Mongo documents ({ _id, image, ... }).
-   The UI components expect { id, thumbnail, images }, so map them here. */
+/* The backend returns Mongo documents
+   The UI components expect  so map them here. */
 function normalize(product) {
   if (!product) return product;
 
@@ -31,7 +31,7 @@ export async function getProductById(id) {
   return normalize(data.product || data);
 }
 
-/* ---------- Admin only (backend checks the admin role) ---------- */
+/* ---------- Admin only ---------- */
 
 const pickFields = (p) => ({
   title: String(p.title || "").trim(),

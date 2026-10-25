@@ -3,12 +3,12 @@ import { SOCKET_URL, getToken } from "./api";
 
 let socket = null;
 
-/* One shared, JWT-authenticated socket for the whole app. */
+/* JWT-authenticated socket for the whole app. */
 export function connectSocket() {
   const token = getToken();
   if (!token) return null;
 
-  // Token changed (logout / login as someone else): start fresh
+  // Token changed start fresh
   if (socket && socket.auth?.token !== token) {
     socket.disconnect();
     socket = null;

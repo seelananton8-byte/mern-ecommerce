@@ -3,7 +3,7 @@ import { backendRequest } from "./api";
 export const shortId = (id) =>
   `#${String(id || "").slice(-8).toUpperCase()}`;
 
-/* Creates an order. Price and stock are always decided by the server. */
+/* Price and stock are always decided by the server. */
 export async function createOrder(order) {
   if (!order || !Array.isArray(order.items) || order.items.length === 0) {
     throw new Error("Cannot create an order without items.");
